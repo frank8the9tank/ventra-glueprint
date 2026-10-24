@@ -1,0 +1,161 @@
+# ventra-ems-blueprint-version: 1
+# ventra-ems-device-types: battery
+# ventra-ems-brand: Solax
+# ventra-ems-min-version: 1.0.561
+# ventra-ems-max-version:
+# Installed and updated by the Ventra-EMS add-on. Don't edit this file: an update replaces it.
+# To change it, copy it under another name first.
+blueprint:
+  name: Ventra-EMS — Solax battery
+  description: >-
+    Lets Ventra-EMS charge and discharge the battery of a Solax inverter through the remote
+    control of the Solax Modbus integration. While the battery's Ventra-EMS "take control"
+    (switch.ems_<id>_take_control) is on, the Ventra-EMS setpoint (number.ems_<id>_battery_power,
+    in W: − = charge, + = discharge) goes to the inverter's remote control active power
+    (Solax: + = charge), remote control is enabled and triggered. While take control is off,
+    remote control is disabled and the inverter runs its own mode again. Everything is written
+    every 5 seconds. The active power's unit (W or kW) is read from the entity and the value is
+    kept inside its range. Version 1.
+  domain: automation
+  input:
+    ems_take_control:
+      name: Ventra-EMS take control
+      description: On while Ventra-EMS controls the battery, e.g. switch.ems_solax_take_control.
+      selector:
+        entity:
+          filter:
+            - integration: ventra_ems
+              domain: switch
+    ems_setpoint:
+      name: Ventra-EMS battery power
+      description: The battery setpoint made by Ventra-EMS (W), e.g. number.ems_solax_battery_power.
+      selector:
+        entity:
+          filter:
+            - integration: ventra_ems
+              domain: number
+    active_power:
+      name: Remote control active power
+      description: The Solax number that sets the battery power (Solax Modbus remote control).
+      default: number.solax_remotecontrol_active_power
+      selector:
+        entity:
+          filter:
+            - domain: number
+    power_control:
+      name: Remote control power control
+      description: The Solax select that turns remote control on or off.
+      default: select.solax_remotecontrol_power_control
+      selector:
+        entity:
+          filter:
+            - domain: select
+    autorepeat_duration:
+      name: Remote control autorepeat duration
+      description: The Solax number that keeps the remote control command active between triggers.
+      default: number.solax_remotecontrol_autorepeat_duration
+      selector:
+        entity:
+          filter:
+            - domain: number
+    trigger_button:
+      name: Remote control trigger
+      description: The Solax button that sends the remote control command to the inverter.
+      default: button.solax_remotecontrol_trigger
+      selector:
+        entity:
+          filter:
+            - domain: button
+    autorepeat_secs:
+      name: Autorepeat (seconds)
+      description: >-
+        How long the inverter repeats the last command by itself. Longer than the 5-second cycle,
+        so the battery keeps its setpoint between writes.
+      default: 3660
+      selector:
+        number:
+          min: 10
+          max: 86400
+          step: 1
+          unit_of_measurement: s
+          mode: box
+    option_enabled:
+      name: Option for "controlled"
+      description: The power control option that hands the battery to remote control.
+      default: Enabled Battery Control
+      selector:
+        text: {}
+    option_disabled:
+      name: Option for "released"
+      description: The power control option that gives the battery back to the inverter.
+      default: Disabled
+      selector:
+        text: {}
+
+variables:
+  ems_take_control: !input ems_take_control
+  ems_setpoint: !input ems_setpoint
+  active_power: !input active_power
+  # Ventra-EMS: − = charge (W). Solax: + = charge, in the entity's own unit, inside its range.
+  target_power: >-
+    {% set watts = 0 - (states(ems_setpoint) | float(0)) %}
+    {% set unit = (state_attr(active_power, 'unit_of_measurement') or 'W') | lower %}
+    {% set value = watts / 1000 if unit == 'kw' else watts %}
+    {% set low = state_attr(active_power, 'min') | float(value) %}
+    {% set high = state_attr(active_power, 'max') | float(value) %}
+    {% set value = [[value, low] | max, high] | min %}
+    {{ (value | round(3)) if unit == 'kw' else (value | int) }}
+
+triggers:
+  - trigger: state
+    entity_id: !input ems_take_control
+  - trigger: homeassistant
+    event: start
+  - trigger: time_pattern          # every 5 s: the inverter stays in line with Ventra-EMS
+    seconds: /5
+
+conditions: []
+
+actions:
+  - choose:
+      - conditions:
+          - condition: state
+            entity_id: !input ems_take_control
+            state: "on"
+        sequence:
+          - action: number.set_value
+            target:
+              entity_id: !input autorepeat_duration
+            data:
+              value: !input autorepeat_secs
+          - action: number.set_value
+            target:
+              entity_id: !input active_power
+            data:
+              value: "{{ target_power }}"
+          - action: select.select_option
+            target:
+              entity_id: !input power_control
+            data:
+              option: !input option_enabled
+          - action: button.press
+            target:
+              entity_id: !input trigger_button
+      - conditions:
+          - condition: state
+            entity_id: !input ems_take_control
+            state: "off"
+        sequence:
+          - action: number.set_value
+            target:
+              entity_id: !input active_power
+            data:
+              value: 0
+          - action: select.select_option
+            target:
+              entity_id: !input power_control
+            data:
+              option: !input option_disabled
+
+mode: single
+max_exceeded: silent

@@ -1,0 +1,87 @@
+# ventra-ems-blueprint-version: 2
+# ventra-ems-device-types: relay_load, heatpump, air_conditioner
+# ventra-ems-brand:
+# ventra-ems-min-version: 1.0.561
+# ventra-ems-max-version:
+# Installed and updated by the Ventra-EMS add-on. Don't edit this file: an update replaces it.
+# To change it, copy it under another name first.
+blueprint:
+  name: Ventra-EMS — relay device
+  description: >-
+    Lets Ventra-EMS switch a relay device: a boiler, pool pump, heater or anything a switch,
+    smart plug or relay can turn on and off. While the device's Ventra-EMS "take control"
+    (switch.ems_<id>_take_control) is on, the device switch follows its Ventra-EMS relay
+    (switch.ems_<id>_relay): on = the device may run, off = blocked. While take control is off,
+    Ventra-EMS is not in control and this automation leaves the device alone. Ventra-EMS already
+    applies "Relay closed means" (Allowed or Blocked/SG-ready). Checked every 5 seconds and on
+    every change. For a heat pump or air conditioner, make one automation per relay (main,
+    heating, cooling, hot water), each with the device's take control. Version 2.
+  domain: automation
+  input:
+    ems_take_control:
+      name: Ventra-EMS take control
+      description: On while Ventra-EMS controls the device, e.g. switch.ems_boiler_take_control.
+      selector:
+        entity:
+          filter:
+            - integration: ventra_ems
+              domain: switch
+    ems_relay:
+      name: Ventra-EMS relay
+      description: The device's relay switch made by Ventra-EMS, e.g. switch.ems_boiler_relay.
+      selector:
+        entity:
+          filter:
+            - integration: ventra_ems
+              domain: switch
+    device_switch:
+      name: Device switch
+      description: The switch, smart plug or relay that powers the device.
+      selector:
+        entity:
+          filter:
+            - domain:
+                - switch
+                - input_boolean
+                - light
+                - fan
+
+variables:
+  ems_take_control: !input ems_take_control
+  ems_relay: !input ems_relay
+  device_switch: !input device_switch
+
+triggers:
+  - trigger: state
+    entity_id: !input ems_take_control
+  - trigger: state
+    entity_id: !input ems_relay
+  - trigger: homeassistant
+    event: start
+  - trigger: time_pattern          # every 5 s: the device stays in line with Ventra-EMS
+    seconds: /5
+
+conditions:
+  # Only while Ventra-EMS controls the device, gives a clear on/off, and the device is not already there
+  - condition: template
+    value_template: >-
+      {{ is_state(ems_take_control, 'on')
+         and states(ems_relay) in ['on', 'off']
+         and states(ems_relay) != states(device_switch) }}
+
+actions:
+  - if:
+      - condition: state
+        entity_id: !input ems_relay
+        state: "on"
+    then:
+      - action: homeassistant.turn_on
+        target:
+          entity_id: !input device_switch
+    else:
+      - action: homeassistant.turn_off
+        target:
+          entity_id: !input device_switch
+
+mode: single
+max_exceeded: silent

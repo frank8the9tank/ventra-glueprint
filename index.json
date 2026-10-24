@@ -1,0 +1,31 @@
+{
+  "index_version": 1,
+  "blueprints": [
+    {
+      "id": "solax_battery",
+      "path": "blueprints/battery/solax_battery.yaml",
+      "version": 1,
+      "device_types": [
+        "battery"
+      ],
+      "brand": "Solax",
+      "min_ems_version": "1.0.561",
+      "max_ems_version": null,
+      "sha256": "be12c70ac39a6336e359c22d3ee9d9c91196889cb24acd633692231dec1de067"
+    },
+    {
+      "id": "relay_device",
+      "path": "blueprints/relay_device/relay_device.yaml",
+      "version": 2,
+      "device_types": [
+        "relay_load",
+        "heatpump",
+        "air_conditioner"
+      ],
+      "brand": "",
+      "min_ems_version": "1.0.561",
+      "max_ems_version": null,
+      "sha256": "5e043925800210e807af109228dbe914833806f8cc9997557b8815b0da8ebf7f"
+    }
+  ]
+}
