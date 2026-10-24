@@ -5,7 +5,7 @@ import os
 import pytest
 
 import build_index
-from conftest import BLUEPRINTS, InputTag, load
+from conftest import BLUEPRINTS, InputTag, declared_inputs, load
 
 
 def _inputs_used(node):
@@ -29,7 +29,7 @@ def test_blueprint_is_valid(path):
     blueprint = data["blueprint"]
     assert blueprint["name"].startswith("Ventra-EMS")
     assert blueprint["domain"] == "automation"
-    declared = set(blueprint["input"])
+    declared = set(declared_inputs(blueprint))
     used = set(_inputs_used({key: value for key, value in data.items() if key != "blueprint"}))
     assert used == declared, f"inputs used {used} vs declared {declared}"
     assert data.get("triggers") and data.get("actions")

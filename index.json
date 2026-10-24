@@ -26,6 +26,19 @@
       "sha256": "699a5686084208966505ffe4b57ee223182efa81fcb2788ab090e3c335d23018"
     },
     {
+      "id": "heatpump_relays",
+      "path": "blueprints/heatpump/heatpump_relays.yaml",
+      "version": 1,
+      "device_types": [
+        "heatpump",
+        "air_conditioner"
+      ],
+      "brand": "",
+      "min_ems_version": "1.0.561",
+      "max_ems_version": null,
+      "sha256": "bdcd5bcdf4cb2f53df68a63c41e66dae9888b218c98c5f2135c0910f30eda996"
+    },
+    {
       "id": "relay_device",
       "path": "blueprints/relay_device/relay_device.yaml",
       "version": 2,

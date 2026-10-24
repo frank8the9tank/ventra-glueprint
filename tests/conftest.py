@@ -28,6 +28,17 @@ def load(path):
         return yaml.load(f, Loader=BlueprintLoader)
 
 
+def declared_inputs(blueprint) -> dict:
+    """name → input, also inside input sections (an entry with its own `input`)."""
+    found = {}
+    for name, item in (blueprint.get("input") or {}).items():
+        if isinstance(item, dict) and "input" in item:
+            found.update(item["input"])
+        else:
+            found[name] = item
+    return found
+
+
 def blueprint_path(folder, name):
     return os.path.join(ROOT, "blueprints", folder, name)
 
