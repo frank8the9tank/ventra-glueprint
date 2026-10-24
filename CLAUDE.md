@@ -1,7 +1,7 @@
 # CLAUDE.md — ventra-glueprint
 
 Home Assistant blueprints ("glue" automations) for Ventra-EMS, separate from the add-on so they can
-change, be tested and be updated on their own. **Private for now**; once public the add-on downloads
+change, be tested and be updated on their own. **Public**; the add-on downloads
 them from this repo (raw GitHub URLs of `index.json` and the files). See README.md.
 
 Project documentation lives in `ventra-docs` (`../ventra-docs/`): `SYSTEM.md` (repos),
