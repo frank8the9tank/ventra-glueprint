@@ -1,0 +1,200 @@
+# ventra-ems-blueprint-version: 1
+# ventra-ems-device-types: ev_charger
+# ventra-ems-brand: OCPP
+# ventra-ems-min-version: 1.0.561
+# ventra-ems-max-version:
+# Installed and updated by the Ventra-EMS add-on. Don't edit this file: an update replaces it.
+# To change it, copy it under another name first.
+blueprint:
+  name: Ventra-EMS — OCPP EV charger
+  description: >-
+    Lets Ventra-EMS charge an EV through a charger in the OCPP integration (lbbrhzn/ocpp). While
+    the charger's Ventra-EMS "take control" (switch.ems_<id>_take_control) is on and a car is
+    plugged in, the Ventra-EMS power (number.ems_<id>_power, in W: − = charging) is turned into a
+    charging current (amps = power ÷ (phases × voltage), kept between the minimum and maximum
+    current and rounded to the current step) on the charger's maximum current, and charging is
+    switched on. While take control is off, charging is switched off and the maximum current goes
+    back to the minimum. Checked every 15 seconds (OCPP chargers need time per command), when a car
+    is plugged in and when take control changes. Version 1.
+  domain: automation
+  input:
+    ems_take_control:
+      name: Ventra-EMS take control
+      description: On while Ventra-EMS charges the car, e.g. switch.ems_evcharger1_take_control.
+      selector:
+        entity:
+          filter:
+            - integration: ventra_ems
+              domain: switch
+    ems_setpoint:
+      name: Ventra-EMS charging power
+      description: The charging power made by Ventra-EMS (W, − = charging), e.g. number.ems_evcharger1_power.
+      selector:
+        entity:
+          filter:
+            - integration: ventra_ems
+              domain: number
+    connector_status:
+      name: Charger connector status
+      description: The OCPP connector status, e.g. sensor.charger1_status_connector.
+      selector:
+        entity:
+          filter:
+            - integration: ocpp
+              domain: sensor
+    maximum_current:
+      name: Charger maximum current
+      description: The OCPP maximum charging current (A), e.g. number.charger1_maximum_current.
+      selector:
+        entity:
+          filter:
+            - integration: ocpp
+              domain: number
+    charge_control:
+      name: Charger charge control
+      description: The OCPP switch that starts and stops charging, e.g. switch.charger1_charge_control.
+      selector:
+        entity:
+          filter:
+            - integration: ocpp
+              domain: switch
+    phases:
+      name: Phases
+      description: How many phases the charger charges on (1 or 3).
+      default: 3
+      selector:
+        number:
+          min: 1
+          max: 3
+          step: 2
+          mode: box
+    voltage:
+      name: Voltage per phase
+      description: The voltage of one phase (V).
+      default: 230
+      selector:
+        number:
+          min: 100
+          max: 260
+          step: 1
+          unit_of_measurement: V
+          mode: box
+    minimum_current:
+      name: Minimum current
+      description: The lowest charging current the charger and car accept (A), usually 6.
+      default: 6
+      selector:
+        number:
+          min: 1
+          max: 32
+          step: 1
+          unit_of_measurement: A
+          mode: box
+    maximum_current_limit:
+      name: Maximum current
+      description: The highest charging current the charger and its connection allow (A).
+      default: 16
+      selector:
+        number:
+          min: 1
+          max: 80
+          step: 1
+          unit_of_measurement: A
+          mode: box
+    current_step:
+      name: Current step
+      description: The charging current is rounded to a multiple of this (A); some chargers only take even amps.
+      default: 1
+      selector:
+        number:
+          min: 1
+          max: 4
+          step: 1
+          unit_of_measurement: A
+          mode: box
+
+variables:
+  ems_setpoint: !input ems_setpoint
+  phases: !input phases
+  voltage: !input voltage
+  minimum_current: !input minimum_current
+  maximum_current_limit: !input maximum_current_limit
+  current_step: !input current_step
+  # Ventra-EMS: − = charging (W) → amps on the phases, between the minimum and maximum, in steps
+  target_current: >-
+    {% set watts = (states(ems_setpoint) | float(0)) | abs %}
+    {% set amps = watts / ((phases | float(3)) * (voltage | float(230))) %}
+    {% set amps = [[amps, minimum_current | float(6)] | max, maximum_current_limit | float(16)] | min %}
+    {% set step = [current_step | float(1), 1] | max %}
+    {% set amps = ((amps / step) | round(0)) * step %}
+    {{ [[amps, minimum_current | float(6)] | max, maximum_current_limit | float(16)] | min | int }}
+
+triggers:
+  - trigger: time_pattern          # every 15 s: OCPP chargers need time per command
+    seconds: /15
+  - trigger: state                 # a car is plugged in
+    entity_id: !input connector_status
+    to: Preparing
+  - trigger: state
+    entity_id: !input ems_take_control
+  - trigger: homeassistant
+    event: start
+
+conditions: []
+
+actions:
+  - choose:
+      - conditions:
+          - condition: state
+            entity_id: !input ems_take_control
+            state: "on"
+          - condition: state
+            entity_id: !input connector_status
+            state:
+              - Preparing
+              - Charging
+              - SuspendedEV
+              - SuspendedEVSE
+              - Finishing
+        sequence:
+          - action: number.set_value
+            target:
+              entity_id: !input maximum_current
+            data:
+              value: "{{ target_current }}"
+          - if:
+              - condition: state
+                entity_id: !input charge_control
+                state: "off"
+            then:
+              - delay:
+                  seconds: 2
+              - action: switch.turn_on
+                target:
+                  entity_id: !input charge_control
+      - conditions:
+          - condition: state
+            entity_id: !input ems_take_control
+            state: "off"
+        sequence:
+          - if:
+              - condition: state
+                entity_id: !input charge_control
+                state: "on"
+            then:
+              - action: switch.turn_off
+                target:
+                  entity_id: !input charge_control
+          - if:
+              - condition: numeric_state
+                entity_id: !input maximum_current
+                above: !input minimum_current
+            then:
+              - action: number.set_value
+                target:
+                  entity_id: !input maximum_current
+                data:
+                  value: !input minimum_current
+
+mode: single
+max_exceeded: silent

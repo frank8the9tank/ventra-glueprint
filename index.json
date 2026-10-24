@@ -14,6 +14,18 @@
       "sha256": "be12c70ac39a6336e359c22d3ee9d9c91196889cb24acd633692231dec1de067"
     },
     {
+      "id": "ocpp_ev_charger",
+      "path": "blueprints/ev_charger/ocpp_ev_charger.yaml",
+      "version": 1,
+      "device_types": [
+        "ev_charger"
+      ],
+      "brand": "OCPP",
+      "min_ems_version": "1.0.561",
+      "max_ems_version": null,
+      "sha256": "699a5686084208966505ffe4b57ee223182efa81fcb2788ab090e3c335d23018"
+    },
+    {
       "id": "relay_device",
       "path": "blueprints/relay_device/relay_device.yaml",
       "version": 2,

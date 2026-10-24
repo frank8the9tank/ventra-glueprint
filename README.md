@@ -1,15 +1,16 @@
-# Ventra-EMS blueprints
+# Ventra-EMS glueprints
 
-Home Assistant blueprints ("glue" automations) for [Ventra-EMS](https://ventra-ems.com). Ventra-EMS
+Home Assistant blueprints for the "glue" automations of [Ventra-EMS](https://ventra-ems.com) — glueprints. Ventra-EMS
 never talks to hardware: for every device it writes a **take control** switch and a **setpoint**
 (or a relay) in Home Assistant. A glue automation, made from one of these blueprints, passes that on
 to the device's own integration (Solax Modbus, a smart plug, an OCPP charger, …).
 
 Using a blueprint is optional: any automation that follows the rule below works.
 
-> **Private for now.** Once public, the Ventra-EMS add-on reads `index.json` and the blueprint files
-> straight from this repository (raw GitHub URLs), offers the ones that fit a device and its
-> Ventra-EMS version, installs them into Home Assistant and keeps them up to date.
+The Ventra-EMS add-on reads `index.json` and the blueprint files straight from this repository
+(raw GitHub URLs), offers the ones that fit a device and its Ventra-EMS version, installs them into
+Home Assistant and keeps them up to date. You can also import one by hand: in Home Assistant,
+*Settings → Automations & scenes → Blueprints → Import blueprint* with the file's GitHub URL.
 
 ## Layout
 
@@ -23,6 +24,7 @@ tests/                               pytest: every blueprint, plus one test file
 | Blueprint | For | Version |
 |---|---|---|
 | `battery/solax_battery.yaml` | A battery behind a Solax inverter (Solax Modbus remote control) | 1 |
+| `ev_charger/ocpp_ev_charger.yaml` | An EV charger in the OCPP integration (lbbrhzn/ocpp): power → charging current + charge control | 1 |
 | `relay_device/relay_device.yaml` | A relay device, heat pump or AC relay switched by a switch / smart plug | 2 |
 
 ## The rule every glue follows
@@ -31,8 +33,10 @@ tests/                               pytest: every blueprint, plus one test file
 
 - **On:** the device follows the Ventra-EMS output: the relay (`switch.ems_<id>_relay`, …) or the
   setpoint (`number.ems_<id>_battery_power`, … in **W**: − = charge / consume, + = discharge).
-- **Off:** the automation leaves the device alone (a battery is handed back to its own mode).
-- Check on every change of take control and the output, and every 5 seconds.
+- **Off:** Ventra-EMS doesn't control the device. A relay device is left alone; a battery is handed
+  back to its own mode; an EV charger stops charging (Ventra-EMS's rules decide when it charges).
+- Check on every change of take control and the output, and every 5 seconds (OCPP chargers every
+  15 seconds: each command takes time).
 
 ## The header: version and compatibility
 

@@ -1,4 +1,4 @@
-# CLAUDE.md — ventra-blueprints
+# CLAUDE.md — ventra-glueprint
 
 Home Assistant blueprints ("glue" automations) for Ventra-EMS, separate from the add-on so they can
 change, be tested and be updated on their own. **Private for now**; once public the add-on downloads
