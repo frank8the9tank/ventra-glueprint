@@ -23,6 +23,8 @@ import os
 import re
 import sys
 
+import yaml
+
 ROOT       = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 BLUEPRINTS = os.path.join(ROOT, "blueprints")
 INDEX      = os.path.join(ROOT, "index.json")
@@ -32,6 +34,38 @@ DEVICE_TYPES  = ("inverter", "battery", "ev_charger", "heatpump", "relay_load", 
 HEADER        = re.compile(r"^#\s*ventra-ems-([a-z-]+):[ \t]*(.*?)\s*$", re.M)
 VERSION       = re.compile(r"^\d+(\.\d+)*$")
 INDEX_VERSION = 1   # the format of index.json; raise it on an incompatible change
+ENTITY_PREFIX = "ems_"   # inputs named ems_<role> are Ventra-EMS entities the add-on fills in (README)
+
+
+class _Loader(yaml.SafeLoader):
+    pass
+
+
+_Loader.add_constructor("!input", lambda loader, node: {"input": loader.construct_scalar(node)})
+
+
+def read_inputs(blueprint: dict) -> list:
+    """The inputs in order, also inside input sections: name, section, title, description,
+    default (when there is one), selector, and the Ventra-EMS role for ems_<role> inputs."""
+    inputs = []
+
+    def add(name, item, section):
+        entry = {"name": name, "section": section, "title": item.get("name", name),
+                 "description": " ".join(str(item.get("description", "")).split()),
+                 "selector": item.get("selector") or {}}
+        if "default" in item:
+            entry["default"] = item["default"]
+        if name.startswith(ENTITY_PREFIX):
+            entry["ems_role"] = name[len(ENTITY_PREFIX):]
+        inputs.append(entry)
+
+    for name, item in (blueprint.get("input") or {}).items():
+        if isinstance(item, dict) and "input" in item:
+            for inner, inner_item in item["input"].items():
+                add(inner, inner_item, item.get("name", name))
+        else:
+            add(name, item or {}, None)
+    return inputs
 
 
 def ems_version(text: str) -> tuple:
@@ -65,16 +99,25 @@ def entry_for(path: str) -> tuple:
     if not problems and maximum and ems_version(maximum) < ems_version(minimum):
         problems.append(f"{relative}: ventra-ems-max-version is below ventra-ems-min-version")
     with open(path, "rb") as f:
-        digest = hashlib.sha256(f.read()).hexdigest()
+        raw = f.read()
+    digest = hashlib.sha256(raw).hexdigest()
+    try:
+        blueprint = (yaml.load(raw.decode("utf-8"), Loader=_Loader) or {}).get("blueprint") or {}
+    except yaml.YAMLError as error:
+        blueprint = {}
+        problems.append(f"{relative}: not valid YAML ({error})")
     entry = {
         "id":              os.path.splitext(os.path.basename(path))[0],
         "path":            relative,
+        "name":            blueprint.get("name", ""),
+        "description":     " ".join(str(blueprint.get("description", "")).split()),
         "version":         int(version) if version.isdigit() else 0,
         "device_types":    types,
         "brand":           header.get("brand", ""),
         "min_ems_version": minimum,
         "max_ems_version": maximum or None,
         "sha256":          digest,
+        "inputs":          read_inputs(blueprint),
     }
     return entry, problems
 

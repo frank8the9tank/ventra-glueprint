@@ -64,3 +64,14 @@ def test_a_wrong_header_is_refused(tmp_path, header, problem):
 def test_versions_compare_as_numbers():
     assert build_index.ems_version("1.0.462.2") > build_index.ems_version("1.0.462")
     assert build_index.ems_version("1.0.1000") > build_index.ems_version("1.0.999")
+
+
+def test_the_index_lists_the_inputs_with_their_ventra_ems_role():
+    index, _ = build_index.build()
+    heatpump = next(entry for entry in index["blueprints"] if entry["id"] == "heatpump_relays")
+    inputs = {item["name"]: item for item in heatpump["inputs"]}
+    assert inputs["ems_take_control"]["ems_role"] == "take_control"
+    assert inputs["ems_heating_relay"]["ems_role"] == "heating_relay" and inputs["ems_heating_relay"]["section"] == "Heating"
+    assert "ems_role" not in inputs["heating_switch"] and inputs["heating_switch"]["default"] == ""
+    assert inputs["heating_conditions"]["selector"] == {"condition": {}}
+    assert heatpump["name"].startswith("Ventra-EMS") and heatpump["description"]

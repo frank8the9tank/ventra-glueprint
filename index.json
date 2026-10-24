@@ -4,6 +4,8 @@
     {
       "id": "solax_battery",
       "path": "blueprints/battery/solax_battery.yaml",
+      "name": "Ventra-EMS — Solax battery",
+      "description": "Lets Ventra-EMS charge and discharge the battery of a Solax inverter through the remote control of the Solax Modbus integration. While the battery's Ventra-EMS \"take control\" (switch.ems_<id>_take_control) is on, the Ventra-EMS setpoint (number.ems_<id>_battery_power, in W: − = charge, + = discharge) goes to the inverter's remote control active power (Solax: + = charge), remote control is enabled and triggered. While take control is off, remote control is disabled and the inverter runs its own mode again. Everything is written every 5 seconds. The active power's unit (W or kW) is read from the entity and the value is kept inside its range. Version 1.",
       "version": 1,
       "device_types": [
         "battery"
@@ -11,11 +13,149 @@
       "brand": "Solax",
       "min_ems_version": "1.0.561",
       "max_ems_version": null,
-      "sha256": "be12c70ac39a6336e359c22d3ee9d9c91196889cb24acd633692231dec1de067"
+      "sha256": "be12c70ac39a6336e359c22d3ee9d9c91196889cb24acd633692231dec1de067",
+      "inputs": [
+        {
+          "name": "ems_take_control",
+          "section": null,
+          "title": "Ventra-EMS take control",
+          "description": "On while Ventra-EMS controls the battery, e.g. switch.ems_solax_take_control.",
+          "selector": {
+            "entity": {
+              "filter": [
+                {
+                  "integration": "ventra_ems",
+                  "domain": "switch"
+                }
+              ]
+            }
+          },
+          "ems_role": "take_control"
+        },
+        {
+          "name": "ems_setpoint",
+          "section": null,
+          "title": "Ventra-EMS battery power",
+          "description": "The battery setpoint made by Ventra-EMS (W), e.g. number.ems_solax_battery_power.",
+          "selector": {
+            "entity": {
+              "filter": [
+                {
+                  "integration": "ventra_ems",
+                  "domain": "number"
+                }
+              ]
+            }
+          },
+          "ems_role": "setpoint"
+        },
+        {
+          "name": "active_power",
+          "section": null,
+          "title": "Remote control active power",
+          "description": "The Solax number that sets the battery power (Solax Modbus remote control).",
+          "selector": {
+            "entity": {
+              "filter": [
+                {
+                  "domain": "number"
+                }
+              ]
+            }
+          },
+          "default": "number.solax_remotecontrol_active_power"
+        },
+        {
+          "name": "power_control",
+          "section": null,
+          "title": "Remote control power control",
+          "description": "The Solax select that turns remote control on or off.",
+          "selector": {
+            "entity": {
+              "filter": [
+                {
+                  "domain": "select"
+                }
+              ]
+            }
+          },
+          "default": "select.solax_remotecontrol_power_control"
+        },
+        {
+          "name": "autorepeat_duration",
+          "section": null,
+          "title": "Remote control autorepeat duration",
+          "description": "The Solax number that keeps the remote control command active between triggers.",
+          "selector": {
+            "entity": {
+              "filter": [
+                {
+                  "domain": "number"
+                }
+              ]
+            }
+          },
+          "default": "number.solax_remotecontrol_autorepeat_duration"
+        },
+        {
+          "name": "trigger_button",
+          "section": null,
+          "title": "Remote control trigger",
+          "description": "The Solax button that sends the remote control command to the inverter.",
+          "selector": {
+            "entity": {
+              "filter": [
+                {
+                  "domain": "button"
+                }
+              ]
+            }
+          },
+          "default": "button.solax_remotecontrol_trigger"
+        },
+        {
+          "name": "autorepeat_secs",
+          "section": null,
+          "title": "Autorepeat (seconds)",
+          "description": "How long the inverter repeats the last command by itself. Longer than the 5-second cycle, so the battery keeps its setpoint between writes.",
+          "selector": {
+            "number": {
+              "min": 10,
+              "max": 86400,
+              "step": 1,
+              "unit_of_measurement": "s",
+              "mode": "box"
+            }
+          },
+          "default": 3660
+        },
+        {
+          "name": "option_enabled",
+          "section": null,
+          "title": "Option for \"controlled\"",
+          "description": "The power control option that hands the battery to remote control.",
+          "selector": {
+            "text": {}
+          },
+          "default": "Enabled Battery Control"
+        },
+        {
+          "name": "option_disabled",
+          "section": null,
+          "title": "Option for \"released\"",
+          "description": "The power control option that gives the battery back to the inverter.",
+          "selector": {
+            "text": {}
+          },
+          "default": "Disabled"
+        }
+      ]
     },
     {
       "id": "ocpp_ev_charger",
       "path": "blueprints/ev_charger/ocpp_ev_charger.yaml",
+      "name": "Ventra-EMS — OCPP EV charger",
+      "description": "Lets Ventra-EMS charge an EV through a charger in the OCPP integration (lbbrhzn/ocpp). While the charger's Ventra-EMS \"take control\" (switch.ems_<id>_take_control) is on and a car is plugged in, the Ventra-EMS power (number.ems_<id>_power, in W: − = charging) is turned into a charging current (amps = power ÷ (phases × voltage), kept between the minimum and maximum current and rounded to the current step) on the charger's maximum current, and charging is switched on. While take control is off, charging is switched off and the maximum current goes back to the minimum. Checked every 15 seconds (OCPP chargers need time per command), when a car is plugged in and when take control changes. Version 1.",
       "version": 1,
       "device_types": [
         "ev_charger"
@@ -23,11 +163,176 @@
       "brand": "OCPP",
       "min_ems_version": "1.0.561",
       "max_ems_version": null,
-      "sha256": "699a5686084208966505ffe4b57ee223182efa81fcb2788ab090e3c335d23018"
+      "sha256": "699a5686084208966505ffe4b57ee223182efa81fcb2788ab090e3c335d23018",
+      "inputs": [
+        {
+          "name": "ems_take_control",
+          "section": null,
+          "title": "Ventra-EMS take control",
+          "description": "On while Ventra-EMS charges the car, e.g. switch.ems_evcharger1_take_control.",
+          "selector": {
+            "entity": {
+              "filter": [
+                {
+                  "integration": "ventra_ems",
+                  "domain": "switch"
+                }
+              ]
+            }
+          },
+          "ems_role": "take_control"
+        },
+        {
+          "name": "ems_setpoint",
+          "section": null,
+          "title": "Ventra-EMS charging power",
+          "description": "The charging power made by Ventra-EMS (W, − = charging), e.g. number.ems_evcharger1_power.",
+          "selector": {
+            "entity": {
+              "filter": [
+                {
+                  "integration": "ventra_ems",
+                  "domain": "number"
+                }
+              ]
+            }
+          },
+          "ems_role": "setpoint"
+        },
+        {
+          "name": "connector_status",
+          "section": null,
+          "title": "Charger connector status",
+          "description": "The OCPP connector status, e.g. sensor.charger1_status_connector.",
+          "selector": {
+            "entity": {
+              "filter": [
+                {
+                  "integration": "ocpp",
+                  "domain": "sensor"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "maximum_current",
+          "section": null,
+          "title": "Charger maximum current",
+          "description": "The OCPP maximum charging current (A), e.g. number.charger1_maximum_current.",
+          "selector": {
+            "entity": {
+              "filter": [
+                {
+                  "integration": "ocpp",
+                  "domain": "number"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "charge_control",
+          "section": null,
+          "title": "Charger charge control",
+          "description": "The OCPP switch that starts and stops charging, e.g. switch.charger1_charge_control.",
+          "selector": {
+            "entity": {
+              "filter": [
+                {
+                  "integration": "ocpp",
+                  "domain": "switch"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "phases",
+          "section": null,
+          "title": "Phases",
+          "description": "How many phases the charger charges on (1 or 3).",
+          "selector": {
+            "number": {
+              "min": 1,
+              "max": 3,
+              "step": 2,
+              "mode": "box"
+            }
+          },
+          "default": 3
+        },
+        {
+          "name": "voltage",
+          "section": null,
+          "title": "Voltage per phase",
+          "description": "The voltage of one phase (V).",
+          "selector": {
+            "number": {
+              "min": 100,
+              "max": 260,
+              "step": 1,
+              "unit_of_measurement": "V",
+              "mode": "box"
+            }
+          },
+          "default": 230
+        },
+        {
+          "name": "minimum_current",
+          "section": null,
+          "title": "Minimum current",
+          "description": "The lowest charging current the charger and car accept (A), usually 6.",
+          "selector": {
+            "number": {
+              "min": 1,
+              "max": 32,
+              "step": 1,
+              "unit_of_measurement": "A",
+              "mode": "box"
+            }
+          },
+          "default": 6
+        },
+        {
+          "name": "maximum_current_limit",
+          "section": null,
+          "title": "Maximum current",
+          "description": "The highest charging current the charger and its connection allow (A).",
+          "selector": {
+            "number": {
+              "min": 1,
+              "max": 80,
+              "step": 1,
+              "unit_of_measurement": "A",
+              "mode": "box"
+            }
+          },
+          "default": 16
+        },
+        {
+          "name": "current_step",
+          "section": null,
+          "title": "Current step",
+          "description": "The charging current is rounded to a multiple of this (A); some chargers only take even amps.",
+          "selector": {
+            "number": {
+              "min": 1,
+              "max": 4,
+              "step": 1,
+              "unit_of_measurement": "A",
+              "mode": "box"
+            }
+          },
+          "default": 1
+        }
+      ]
     },
     {
       "id": "heatpump_relays",
       "path": "blueprints/heatpump/heatpump_relays.yaml",
+      "name": "Ventra-EMS — heat pump / air conditioner (relays)",
+      "description": "Lets Ventra-EMS switch a heat pump or air conditioner through its relays: main, heating, cooling and hot water (fill in only the ones the device has). While the device's Ventra-EMS \"take control\" (switch.ems_<id>_take_control) is on, each device switch follows its Ventra-EMS relay (switch.ems_<id>_main_relay, switch.ems_<id>_heating_relay, …): on = allowed, off = blocked. Each relay can have extra conditions of your own (for example a room temperature): the switch is only on when the Ventra-EMS relay is on and those conditions are met. While take control is off, this automation leaves the device alone. Checked every 5 seconds; a switch is only changed when it differs. Version 1.",
       "version": 1,
       "device_types": [
         "heatpump",
@@ -36,11 +341,220 @@
       "brand": "",
       "min_ems_version": "1.0.561",
       "max_ems_version": null,
-      "sha256": "bdcd5bcdf4cb2f53df68a63c41e66dae9888b218c98c5f2135c0910f30eda996"
+      "sha256": "bdcd5bcdf4cb2f53df68a63c41e66dae9888b218c98c5f2135c0910f30eda996",
+      "inputs": [
+        {
+          "name": "ems_take_control",
+          "section": null,
+          "title": "Ventra-EMS take control",
+          "description": "On while Ventra-EMS controls the device, e.g. switch.ems_nibe_take_control.",
+          "selector": {
+            "entity": {
+              "filter": [
+                {
+                  "integration": "ventra_ems",
+                  "domain": "switch"
+                }
+              ]
+            }
+          },
+          "ems_role": "take_control"
+        },
+        {
+          "name": "ems_main_relay",
+          "section": "Main",
+          "title": "Ventra-EMS main relay",
+          "description": "The Ventra-EMS relay, e.g. switch.ems_nibe_main_relay. Leave empty when the device has none.",
+          "selector": {
+            "entity": {
+              "filter": [
+                {
+                  "integration": "ventra_ems",
+                  "domain": "switch"
+                }
+              ]
+            }
+          },
+          "default": "",
+          "ems_role": "main_relay"
+        },
+        {
+          "name": "main_switch",
+          "section": "Main",
+          "title": "Device switch (main)",
+          "description": "The switch on the device side, the heat pump's enable switch. Leave empty when not used.",
+          "selector": {
+            "entity": {
+              "filter": [
+                {
+                  "domain": [
+                    "switch",
+                    "input_boolean"
+                  ]
+                }
+              ]
+            }
+          },
+          "default": ""
+        },
+        {
+          "name": "main_conditions",
+          "section": "Main",
+          "title": "Extra conditions (main)",
+          "description": "Optional conditions of your own; the switch is only on when they are met as well.",
+          "selector": {
+            "condition": {}
+          },
+          "default": []
+        },
+        {
+          "name": "ems_heating_relay",
+          "section": "Heating",
+          "title": "Ventra-EMS heating relay",
+          "description": "The Ventra-EMS relay, e.g. switch.ems_nibe_heating_relay. Leave empty when the device has none.",
+          "selector": {
+            "entity": {
+              "filter": [
+                {
+                  "integration": "ventra_ems",
+                  "domain": "switch"
+                }
+              ]
+            }
+          },
+          "default": "",
+          "ems_role": "heating_relay"
+        },
+        {
+          "name": "heating_switch",
+          "section": "Heating",
+          "title": "Device switch (heating)",
+          "description": "The switch on the device side, the switch that allows heating. Leave empty when not used.",
+          "selector": {
+            "entity": {
+              "filter": [
+                {
+                  "domain": [
+                    "switch",
+                    "input_boolean"
+                  ]
+                }
+              ]
+            }
+          },
+          "default": ""
+        },
+        {
+          "name": "heating_conditions",
+          "section": "Heating",
+          "title": "Extra conditions (heating)",
+          "description": "Optional conditions of your own; the switch is only on when they are met as well, e.g. only while the room is below its set temperature.",
+          "selector": {
+            "condition": {}
+          },
+          "default": []
+        },
+        {
+          "name": "ems_cooling_relay",
+          "section": "Cooling",
+          "title": "Ventra-EMS cooling relay",
+          "description": "The Ventra-EMS relay, e.g. switch.ems_nibe_cooling_relay. Leave empty when the device has none.",
+          "selector": {
+            "entity": {
+              "filter": [
+                {
+                  "integration": "ventra_ems",
+                  "domain": "switch"
+                }
+              ]
+            }
+          },
+          "default": "",
+          "ems_role": "cooling_relay"
+        },
+        {
+          "name": "cooling_switch",
+          "section": "Cooling",
+          "title": "Device switch (cooling)",
+          "description": "The switch on the device side, the switch that allows cooling. Leave empty when not used.",
+          "selector": {
+            "entity": {
+              "filter": [
+                {
+                  "domain": [
+                    "switch",
+                    "input_boolean"
+                  ]
+                }
+              ]
+            }
+          },
+          "default": ""
+        },
+        {
+          "name": "cooling_conditions",
+          "section": "Cooling",
+          "title": "Extra conditions (cooling)",
+          "description": "Optional conditions of your own; the switch is only on when they are met as well, e.g. only while the room is above its set temperature.",
+          "selector": {
+            "condition": {}
+          },
+          "default": []
+        },
+        {
+          "name": "ems_hotwater_relay",
+          "section": "Hot water",
+          "title": "Ventra-EMS hot water relay",
+          "description": "The Ventra-EMS relay, e.g. switch.ems_nibe_hotwater_relay. Leave empty when the device has none.",
+          "selector": {
+            "entity": {
+              "filter": [
+                {
+                  "integration": "ventra_ems",
+                  "domain": "switch"
+                }
+              ]
+            }
+          },
+          "default": "",
+          "ems_role": "hotwater_relay"
+        },
+        {
+          "name": "hotwater_switch",
+          "section": "Hot water",
+          "title": "Device switch (hot water)",
+          "description": "The switch on the device side, the switch that allows hot water. Leave empty when not used.",
+          "selector": {
+            "entity": {
+              "filter": [
+                {
+                  "domain": [
+                    "switch",
+                    "input_boolean"
+                  ]
+                }
+              ]
+            }
+          },
+          "default": ""
+        },
+        {
+          "name": "hotwater_conditions",
+          "section": "Hot water",
+          "title": "Extra conditions (hot water)",
+          "description": "Optional conditions of your own; the switch is only on when they are met as well.",
+          "selector": {
+            "condition": {}
+          },
+          "default": []
+        }
+      ]
     },
     {
       "id": "relay_device",
       "path": "blueprints/relay_device/relay_device.yaml",
+      "name": "Ventra-EMS — relay device",
+      "description": "Lets Ventra-EMS switch a relay device: a boiler, pool pump, heater or anything a switch, smart plug or relay can turn on and off. While the device's Ventra-EMS \"take control\" (switch.ems_<id>_take_control) is on, the device switch follows its Ventra-EMS relay (switch.ems_<id>_relay): on = the device may run, off = blocked. While take control is off, Ventra-EMS is not in control and this automation leaves the device alone. Ventra-EMS already applies \"Relay closed means\" (Allowed or Blocked/SG-ready). Checked every 5 seconds and on every change. For a heat pump or air conditioner, make one automation per relay (main, heating, cooling, hot water), each with the device's take control. Version 2.",
       "version": 2,
       "device_types": [
         "relay_load",
@@ -50,7 +564,63 @@
       "brand": "",
       "min_ems_version": "1.0.561",
       "max_ems_version": null,
-      "sha256": "5e043925800210e807af109228dbe914833806f8cc9997557b8815b0da8ebf7f"
+      "sha256": "5e043925800210e807af109228dbe914833806f8cc9997557b8815b0da8ebf7f",
+      "inputs": [
+        {
+          "name": "ems_take_control",
+          "section": null,
+          "title": "Ventra-EMS take control",
+          "description": "On while Ventra-EMS controls the device, e.g. switch.ems_boiler_take_control.",
+          "selector": {
+            "entity": {
+              "filter": [
+                {
+                  "integration": "ventra_ems",
+                  "domain": "switch"
+                }
+              ]
+            }
+          },
+          "ems_role": "take_control"
+        },
+        {
+          "name": "ems_relay",
+          "section": null,
+          "title": "Ventra-EMS relay",
+          "description": "The device's relay switch made by Ventra-EMS, e.g. switch.ems_boiler_relay.",
+          "selector": {
+            "entity": {
+              "filter": [
+                {
+                  "integration": "ventra_ems",
+                  "domain": "switch"
+                }
+              ]
+            }
+          },
+          "ems_role": "relay"
+        },
+        {
+          "name": "device_switch",
+          "section": null,
+          "title": "Device switch",
+          "description": "The switch, smart plug or relay that powers the device.",
+          "selector": {
+            "entity": {
+              "filter": [
+                {
+                  "domain": [
+                    "switch",
+                    "input_boolean",
+                    "light",
+                    "fan"
+                  ]
+                }
+              ]
+            }
+          }
+        }
+      ]
     }
   ]
 }

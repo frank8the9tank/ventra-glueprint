@@ -39,6 +39,23 @@ tests/                               pytest: every blueprint, plus one test file
 - Check on every change of take control and the output, and every 5 seconds (OCPP chargers every
   15 seconds: each command takes time).
 
+## Ventra-EMS inputs: `ems_<role>`
+
+An input whose name starts with `ems_` is a Ventra-EMS entity; the add-on fills it in itself when
+it creates the automation for a device. The rest of the name is the entity's role:
+
+| Input | Filled with |
+|---|---|
+| `ems_take_control` | `switch.ems_<id>_take_control` (every controlled device) |
+| `ems_setpoint` | battery `number.ems_<id>_battery_power`, EV charger `number.ems_<id>_power`, grid controller `number.ems_<id>_grid_setpoint` |
+| `ems_relay` | relay device `switch.ems_<id>_relay` |
+| `ems_main_relay`, `ems_<mode>_relay` | heat pump / AC `switch.ems_<id>_main_relay`, `switch.ems_<id>_heating_relay`, … |
+| `ems_limit_control`, `ems_power_limit` | inverter with a power limit |
+
+A role the device doesn't have (an AC has no main relay) stays empty, so give such inputs
+`default: ""`. All other inputs are asked in the device window (entities with the blueprint's own
+filters, numbers and text with their defaults); condition inputs are added later in Home Assistant.
+
 ## The header: version and compatibility
 
 Every blueprint starts with:
