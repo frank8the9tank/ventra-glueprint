@@ -1,4 +1,4 @@
-# ventra-ems-blueprint-version: 1
+# ventra-ems-blueprint-version: 2
 # ventra-ems-device-types: inverter
 # ventra-ems-brand: SolarEdge
 # ventra-ems-min-version: 1.0.561
@@ -14,7 +14,8 @@ blueprint:
     limit (number.ems_<id>_power_limit, in W; the site limit's own unit W or kW is read and the
     value kept inside its range). While limit control is off, the limit control mode goes back to
     disabled, so the inverter produces freely. Checked every 5 seconds and when limit control
-    changes; an entity is only written when its value differs. Version 1.
+    changes; an entity is only written when its value differs. Only production limiting: the battery
+    of a StorEdge inverter is controlled by the separate glueprint "SolarEdge StorEdge battery". Version 2.
   domain: automation
   input:
     ems_limit_control:

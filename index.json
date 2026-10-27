@@ -5,15 +5,15 @@
       "id": "solaredge_storedge_battery",
       "path": "blueprints/battery/solaredge_storedge_battery.yaml",
       "name": "Ventra-EMS — SolarEdge StorEdge battery",
-      "description": "Lets Ventra-EMS charge and discharge the battery of a SolarEdge StorEdge inverter through the storage remote control of the SolarEdge Modbus Multi integration. While the battery's Ventra-EMS \"take control\" (switch.ems_<id>_take_control) is on, the storage control mode is set to remote control and the Ventra-EMS setpoint (number.ems_<id>_battery_power, in W: − = charge, + = discharge) decides the command: discharge with the setpoint as discharge limit, or charge with it as charge limit (the other limit is 0). While take control is off, the storage control mode is disabled and the command mode set to off, so the inverter runs its own mode again. Checked every 5 seconds and when take control changes. The command mode is written every time (it keeps the inverter's remote control command timeout from running out); the rest only when it differs. The limits' unit (W or kW) is read from the entities and the values are kept inside their range. Version 1.",
-      "version": 1,
+      "description": "Lets Ventra-EMS charge and discharge the battery of a SolarEdge StorEdge inverter through the storage remote control of the SolarEdge Modbus Multi integration. While the battery's Ventra-EMS \"take control\" (switch.ems_<id>_take_control) is on, the storage control mode is set to remote control and the Ventra-EMS setpoint (number.ems_<id>_battery_power, in W: − = charge, + = discharge) decides the command: discharge with the setpoint as discharge limit, or charge with it as charge limit (the other limit is 0). While take control is off, the storage control mode is disabled and the command mode set to off, so the inverter runs its own mode again. Checked every 5 seconds and when take control changes. The command mode is written every time (it keeps the inverter's remote control command timeout from running out); the rest only when it differs. The limits' unit (W or kW) is read from the entities and the values are kept inside their range. Only battery control: limiting the production of a SolarEdge inverter is the separate glueprint \"SolarEdge inverter limit\". Version 2.",
+      "version": 2,
       "device_types": [
         "battery"
       ],
       "brand": "SolarEdge",
       "min_ems_version": "1.0.561",
       "max_ems_version": null,
-      "sha256": "923c72fb70c08b3459d29190ca0e216b9e21ab601350e7ed64c82be53dbfd7f0",
+      "sha256": "b6b67a630fb8cf409d2644fde2ad8ff10869fb629aa421acfab88007f0671393",
       "inputs": [
         {
           "name": "ems_take_control",
@@ -53,7 +53,7 @@
           "name": "storage_control_mode",
           "section": null,
           "title": "Storage control mode",
-          "description": "The SolarEdge select that hands the battery to remote control, e.g. select.solaredge_i1_storage_control_mode.",
+          "description": "The SolarEdge select that hands the battery to remote control, e.g. select.storedge_i1_storage_control_mode.",
           "selector": {
             "entity": {
               "filter": [
@@ -68,7 +68,7 @@
           "name": "storage_command_mode",
           "section": null,
           "title": "Storage command mode",
-          "description": "The SolarEdge select with the remote control command, e.g. select.solaredge_i1_storage_command_mode.",
+          "description": "The SolarEdge select with the remote control command, e.g. select.storedge_i1_storage_command_mode.",
           "selector": {
             "entity": {
               "filter": [
@@ -83,7 +83,7 @@
           "name": "charge_limit",
           "section": null,
           "title": "Storage charge limit",
-          "description": "The SolarEdge number with the charge power, e.g. number.solaredge_i1_storage_charge_limit.",
+          "description": "The SolarEdge number with the charge power, e.g. number.storedge_i1_storage_charge_limit.",
           "selector": {
             "entity": {
               "filter": [
@@ -98,7 +98,7 @@
           "name": "discharge_limit",
           "section": null,
           "title": "Storage discharge limit",
-          "description": "The SolarEdge number with the discharge power, e.g. number.solaredge_i1_storage_discharge_limit.",
+          "description": "The SolarEdge number with the discharge power, e.g. number.storedge_i1_storage_discharge_limit.",
           "selector": {
             "entity": {
               "filter": [
@@ -714,15 +714,15 @@
       "id": "solaredge_inverter_limit",
       "path": "blueprints/inverter/solaredge_inverter_limit.yaml",
       "name": "Ventra-EMS — SolarEdge inverter limit",
-      "description": "Lets Ventra-EMS limit the production of a SolarEdge inverter (SolarEdge Modbus Multi). While the inverter's Ventra-EMS \"limit control\" (switch.ems_<id>_limit_control) is on, the limit control mode is set to production control and the site limit follows the Ventra-EMS power limit (number.ems_<id>_power_limit, in W; the site limit's own unit W or kW is read and the value kept inside its range). While limit control is off, the limit control mode goes back to disabled, so the inverter produces freely. Checked every 5 seconds and when limit control changes; an entity is only written when its value differs. Version 1.",
-      "version": 1,
+      "description": "Lets Ventra-EMS limit the production of a SolarEdge inverter (SolarEdge Modbus Multi). While the inverter's Ventra-EMS \"limit control\" (switch.ems_<id>_limit_control) is on, the limit control mode is set to production control and the site limit follows the Ventra-EMS power limit (number.ems_<id>_power_limit, in W; the site limit's own unit W or kW is read and the value kept inside its range). While limit control is off, the limit control mode goes back to disabled, so the inverter produces freely. Checked every 5 seconds and when limit control changes; an entity is only written when its value differs. Only production limiting: the battery of a StorEdge inverter is controlled by the separate glueprint \"SolarEdge StorEdge battery\". Version 2.",
+      "version": 2,
       "device_types": [
         "inverter"
       ],
       "brand": "SolarEdge",
       "min_ems_version": "1.0.561",
       "max_ems_version": null,
-      "sha256": "1765f8f391cef67d2964b079830c7ed1a83c67a9ffba043a1b8c90f885c13799",
+      "sha256": "2c37e7e96dfd46cc646661c40680c28da5dc9d892535d4c678fd30d0b98524aa",
       "inputs": [
         {
           "name": "ems_limit_control",

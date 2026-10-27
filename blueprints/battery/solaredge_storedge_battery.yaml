@@ -1,4 +1,4 @@
-# ventra-ems-blueprint-version: 1
+# ventra-ems-blueprint-version: 2
 # ventra-ems-device-types: battery
 # ventra-ems-brand: SolarEdge
 # ventra-ems-min-version: 1.0.561
@@ -18,7 +18,8 @@ blueprint:
     own mode again. Checked every 5 seconds and when take control changes. The command mode is
     written every time (it keeps the inverter's remote control command timeout from running out);
     the rest only when it differs. The limits' unit (W or kW) is read from the entities and the
-    values are kept inside their range. Version 1.
+    values are kept inside their range. Only battery control: limiting the production of a SolarEdge
+    inverter is the separate glueprint "SolarEdge inverter limit". Version 2.
   domain: automation
   input:
     ems_take_control:
@@ -39,28 +40,28 @@ blueprint:
               domain: number
     storage_control_mode:
       name: Storage control mode
-      description: The SolarEdge select that hands the battery to remote control, e.g. select.solaredge_i1_storage_control_mode.
+      description: The SolarEdge select that hands the battery to remote control, e.g. select.storedge_i1_storage_control_mode.
       selector:
         entity:
           filter:
             - domain: select
     storage_command_mode:
       name: Storage command mode
-      description: The SolarEdge select with the remote control command, e.g. select.solaredge_i1_storage_command_mode.
+      description: The SolarEdge select with the remote control command, e.g. select.storedge_i1_storage_command_mode.
       selector:
         entity:
           filter:
             - domain: select
     charge_limit:
       name: Storage charge limit
-      description: The SolarEdge number with the charge power, e.g. number.solaredge_i1_storage_charge_limit.
+      description: The SolarEdge number with the charge power, e.g. number.storedge_i1_storage_charge_limit.
       selector:
         entity:
           filter:
             - domain: number
     discharge_limit:
       name: Storage discharge limit
-      description: The SolarEdge number with the discharge power, e.g. number.solaredge_i1_storage_discharge_limit.
+      description: The SolarEdge number with the discharge power, e.g. number.storedge_i1_storage_discharge_limit.
       selector:
         entity:
           filter:
