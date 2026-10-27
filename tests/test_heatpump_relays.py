@@ -1,4 +1,4 @@
-"""The heat pump / air conditioner blueprint: while Ventra-EMS has control, each device switch
+"""The heat pump blueprint: while Ventra-EMS has control, each device switch
 follows its Ventra-EMS relay (main, heating, cooling, hot water) and its optional extra conditions."""
 import jinja2
 import pytest

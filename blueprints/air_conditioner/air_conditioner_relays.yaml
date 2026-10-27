@@ -1,0 +1,167 @@
+# ventra-ems-blueprint-version: 1
+# ventra-ems-device-types: air_conditioner
+# ventra-ems-brand:
+# ventra-ems-min-version: 1.0.561
+# ventra-ems-max-version:
+# Installed and updated by the Ventra-EMS add-on. Don't edit this file: an update replaces it.
+# To change it, copy it under another name first.
+blueprint:
+  name: Ventra-EMS — air conditioner (relays)
+  description: >-
+    Lets Ventra-EMS switch an air conditioner through its relays: heating and cooling (fill in
+    only the ones the device has). While the device's Ventra-EMS "take control"
+    (switch.ems_<id>_take_control) is on, each device switch follows its Ventra-EMS relay
+    (switch.ems_<id>_heating_relay, switch.ems_<id>_cooling_relay): on = allowed, off =
+    blocked. Each relay can have extra conditions of your own (for example a room temperature):
+    the switch is only on when the Ventra-EMS relay is on and those conditions are met. While take
+    control is off, this automation leaves the device alone. Checked every 5 seconds; a switch is
+    only changed when it differs. Version 1.
+  domain: automation
+  input:
+    ems_take_control:
+      name: Ventra-EMS take control
+      description: On while Ventra-EMS controls the device, e.g. switch.ems_airco_take_control.
+      selector:
+        entity:
+          filter:
+            - integration: ventra_ems
+              domain: switch
+    heating:
+      name: Heating
+      icon: mdi:electric-switch
+      collapsed: true
+      input:
+        ems_heating_relay:
+          name: Ventra-EMS heating relay
+          description: The Ventra-EMS relay, e.g. switch.ems_airco_heating_relay. Leave empty when the device has none.
+          default: ""
+          selector:
+            entity:
+              filter:
+                - integration: ventra_ems
+                  domain: switch
+        heating_switch:
+          name: Device switch (heating)
+          description: The switch on the device side, the switch that allows heating. Leave empty when not used.
+          default: ""
+          selector:
+            entity:
+              filter:
+                - domain:
+                    - switch
+                    - input_boolean
+        heating_conditions:
+          name: Extra conditions (heating)
+          description: >-
+            Optional conditions of your own; the switch is only on when they are met as well, e.g. only while the room is below its set temperature.
+          default: []
+          selector:
+            condition: {}
+    cooling:
+      name: Cooling
+      icon: mdi:electric-switch
+      collapsed: true
+      input:
+        ems_cooling_relay:
+          name: Ventra-EMS cooling relay
+          description: The Ventra-EMS relay, e.g. switch.ems_airco_cooling_relay. Leave empty when the device has none.
+          default: ""
+          selector:
+            entity:
+              filter:
+                - integration: ventra_ems
+                  domain: switch
+        cooling_switch:
+          name: Device switch (cooling)
+          description: The switch on the device side, the switch that allows cooling. Leave empty when not used.
+          default: ""
+          selector:
+            entity:
+              filter:
+                - domain:
+                    - switch
+                    - input_boolean
+        cooling_conditions:
+          name: Extra conditions (cooling)
+          description: >-
+            Optional conditions of your own; the switch is only on when they are met as well, e.g. only while the room is above its set temperature.
+          default: []
+          selector:
+            condition: {}
+
+variables:
+  ems_take_control: !input ems_take_control
+  ems_heating_relay: !input ems_heating_relay
+  heating_switch: !input heating_switch
+  ems_cooling_relay: !input ems_cooling_relay
+  cooling_switch: !input cooling_switch
+
+triggers:
+  - trigger: state
+    entity_id: !input ems_take_control
+  - trigger: homeassistant
+    event: start
+  - trigger: time_pattern          # every 5 s: the device stays in line with Ventra-EMS
+    seconds: /5
+
+conditions:
+  # Only while Ventra-EMS controls the device; otherwise the device is left alone
+  - condition: template
+    value_template: "{{ is_state(ems_take_control, 'on') }}"
+
+actions:
+  - alias: Heating
+    if:
+      - condition: template          # this relay is used and gives a clear on / off
+        value_template: "{{ ems_heating_relay != '' and heating_switch != '' and states(ems_heating_relay) in ['on', 'off'] }}"
+    then:
+      - if:
+          - condition: template
+            value_template: "{{ is_state(ems_heating_relay, 'on') }}"
+          - condition: and
+            conditions: !input heating_conditions
+        then:
+          - if:
+              - condition: template
+                value_template: "{{ not is_state(heating_switch, 'on') }}"
+            then:
+              - action: homeassistant.turn_on
+                target:
+                  entity_id: "{{ heating_switch }}"
+        else:
+          - if:
+              - condition: template
+                value_template: "{{ is_state(heating_switch, 'on') }}"
+            then:
+              - action: homeassistant.turn_off
+                target:
+                  entity_id: "{{ heating_switch }}"
+  - alias: Cooling
+    if:
+      - condition: template          # this relay is used and gives a clear on / off
+        value_template: "{{ ems_cooling_relay != '' and cooling_switch != '' and states(ems_cooling_relay) in ['on', 'off'] }}"
+    then:
+      - if:
+          - condition: template
+            value_template: "{{ is_state(ems_cooling_relay, 'on') }}"
+          - condition: and
+            conditions: !input cooling_conditions
+        then:
+          - if:
+              - condition: template
+                value_template: "{{ not is_state(cooling_switch, 'on') }}"
+            then:
+              - action: homeassistant.turn_on
+                target:
+                  entity_id: "{{ cooling_switch }}"
+        else:
+          - if:
+              - condition: template
+                value_template: "{{ is_state(cooling_switch, 'on') }}"
+            then:
+              - action: homeassistant.turn_off
+                target:
+                  entity_id: "{{ cooling_switch }}"
+
+mode: single
+max_exceeded: silent

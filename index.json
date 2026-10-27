@@ -2,6 +2,133 @@
   "index_version": 1,
   "blueprints": [
     {
+      "id": "air_conditioner_relays",
+      "path": "blueprints/air_conditioner/air_conditioner_relays.yaml",
+      "name": "Ventra-EMS — air conditioner (relays)",
+      "description": "Lets Ventra-EMS switch an air conditioner through its relays: heating and cooling (fill in only the ones the device has). While the device's Ventra-EMS \"take control\" (switch.ems_<id>_take_control) is on, each device switch follows its Ventra-EMS relay (switch.ems_<id>_heating_relay, switch.ems_<id>_cooling_relay): on = allowed, off = blocked. Each relay can have extra conditions of your own (for example a room temperature): the switch is only on when the Ventra-EMS relay is on and those conditions are met. While take control is off, this automation leaves the device alone. Checked every 5 seconds; a switch is only changed when it differs. Version 1.",
+      "version": 1,
+      "device_types": [
+        "air_conditioner"
+      ],
+      "brand": "",
+      "min_ems_version": "1.0.561",
+      "max_ems_version": null,
+      "sha256": "33aceaedd68ffb7a95423ba911b4fc180cda8617522f97eaaf16d8c89f22915b",
+      "inputs": [
+        {
+          "name": "ems_take_control",
+          "section": null,
+          "title": "Ventra-EMS take control",
+          "description": "On while Ventra-EMS controls the device, e.g. switch.ems_airco_take_control.",
+          "selector": {
+            "entity": {
+              "filter": [
+                {
+                  "integration": "ventra_ems",
+                  "domain": "switch"
+                }
+              ]
+            }
+          },
+          "ems_role": "take_control"
+        },
+        {
+          "name": "ems_heating_relay",
+          "section": "Heating",
+          "title": "Ventra-EMS heating relay",
+          "description": "The Ventra-EMS relay, e.g. switch.ems_airco_heating_relay. Leave empty when the device has none.",
+          "selector": {
+            "entity": {
+              "filter": [
+                {
+                  "integration": "ventra_ems",
+                  "domain": "switch"
+                }
+              ]
+            }
+          },
+          "default": "",
+          "ems_role": "heating_relay"
+        },
+        {
+          "name": "heating_switch",
+          "section": "Heating",
+          "title": "Device switch (heating)",
+          "description": "The switch on the device side, the switch that allows heating. Leave empty when not used.",
+          "selector": {
+            "entity": {
+              "filter": [
+                {
+                  "domain": [
+                    "switch",
+                    "input_boolean"
+                  ]
+                }
+              ]
+            }
+          },
+          "default": ""
+        },
+        {
+          "name": "heating_conditions",
+          "section": "Heating",
+          "title": "Extra conditions (heating)",
+          "description": "Optional conditions of your own; the switch is only on when they are met as well, e.g. only while the room is below its set temperature.",
+          "selector": {
+            "condition": {}
+          },
+          "default": []
+        },
+        {
+          "name": "ems_cooling_relay",
+          "section": "Cooling",
+          "title": "Ventra-EMS cooling relay",
+          "description": "The Ventra-EMS relay, e.g. switch.ems_airco_cooling_relay. Leave empty when the device has none.",
+          "selector": {
+            "entity": {
+              "filter": [
+                {
+                  "integration": "ventra_ems",
+                  "domain": "switch"
+                }
+              ]
+            }
+          },
+          "default": "",
+          "ems_role": "cooling_relay"
+        },
+        {
+          "name": "cooling_switch",
+          "section": "Cooling",
+          "title": "Device switch (cooling)",
+          "description": "The switch on the device side, the switch that allows cooling. Leave empty when not used.",
+          "selector": {
+            "entity": {
+              "filter": [
+                {
+                  "domain": [
+                    "switch",
+                    "input_boolean"
+                  ]
+                }
+              ]
+            }
+          },
+          "default": ""
+        },
+        {
+          "name": "cooling_conditions",
+          "section": "Cooling",
+          "title": "Extra conditions (cooling)",
+          "description": "Optional conditions of your own; the switch is only on when they are met as well, e.g. only while the room is above its set temperature.",
+          "selector": {
+            "condition": {}
+          },
+          "default": []
+        }
+      ]
+    },
+    {
       "id": "solaredge_storedge_battery",
       "path": "blueprints/battery/solaredge_storedge_battery.yaml",
       "name": "Ventra-EMS — SolarEdge StorEdge battery",
@@ -616,17 +743,16 @@
     {
       "id": "heatpump_relays",
       "path": "blueprints/heatpump/heatpump_relays.yaml",
-      "name": "Ventra-EMS — heat pump / air conditioner (relays)",
-      "description": "Lets Ventra-EMS switch a heat pump or air conditioner through its relays: main, heating, cooling and hot water (fill in only the ones the device has). While the device's Ventra-EMS \"take control\" (switch.ems_<id>_take_control) is on, each device switch follows its Ventra-EMS relay (switch.ems_<id>_main_relay, switch.ems_<id>_heating_relay, …): on = allowed, off = blocked. Each relay can have extra conditions of your own (for example a room temperature): the switch is only on when the Ventra-EMS relay is on and those conditions are met. While take control is off, this automation leaves the device alone. Checked every 5 seconds; a switch is only changed when it differs. Version 1.",
-      "version": 1,
+      "name": "Ventra-EMS — heat pump (relays)",
+      "description": "Lets Ventra-EMS switch a heat pump through its relays: main, heating, cooling and hot water (fill in only the ones the device has). While the device's Ventra-EMS \"take control\" (switch.ems_<id>_take_control) is on, each device switch follows its Ventra-EMS relay (switch.ems_<id>_main_relay, switch.ems_<id>_heating_relay, …): on = allowed, off = blocked. Each relay can have extra conditions of your own (for example a room temperature): the switch is only on when the Ventra-EMS relay is on and those conditions are met. While take control is off, this automation leaves the device alone. Checked every 5 seconds; a switch is only changed when it differs. For an air conditioner: the glueprint \"air conditioner (relays)\". Version 2.",
+      "version": 2,
       "device_types": [
-        "heatpump",
-        "air_conditioner"
+        "heatpump"
       ],
       "brand": "",
       "min_ems_version": "1.0.561",
       "max_ems_version": null,
-      "sha256": "bdcd5bcdf4cb2f53df68a63c41e66dae9888b218c98c5f2135c0910f30eda996",
+      "sha256": "69c6f5706754e5d717756252c5ac4f3e803653a16383bf8491a4a066f97ff646",
       "inputs": [
         {
           "name": "ems_take_control",

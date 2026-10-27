@@ -1,21 +1,22 @@
-# ventra-ems-blueprint-version: 1
-# ventra-ems-device-types: heatpump, air_conditioner
+# ventra-ems-blueprint-version: 2
+# ventra-ems-device-types: heatpump
 # ventra-ems-brand:
 # ventra-ems-min-version: 1.0.561
 # ventra-ems-max-version:
 # Installed and updated by the Ventra-EMS add-on. Don't edit this file: an update replaces it.
 # To change it, copy it under another name first.
 blueprint:
-  name: Ventra-EMS — heat pump / air conditioner (relays)
+  name: Ventra-EMS — heat pump (relays)
   description: >-
-    Lets Ventra-EMS switch a heat pump or air conditioner through its relays: main, heating,
+    Lets Ventra-EMS switch a heat pump through its relays: main, heating,
     cooling and hot water (fill in only the ones the device has). While the device's Ventra-EMS
     "take control" (switch.ems_<id>_take_control) is on, each device switch follows its Ventra-EMS
     relay (switch.ems_<id>_main_relay, switch.ems_<id>_heating_relay, …): on = allowed, off =
     blocked. Each relay can have extra conditions of your own (for example a room temperature):
     the switch is only on when the Ventra-EMS relay is on and those conditions are met. While take
     control is off, this automation leaves the device alone. Checked every 5 seconds; a switch is
-    only changed when it differs. Version 1.
+    only changed when it differs. For an air conditioner: the glueprint
+    "air conditioner (relays)". Version 2.
   domain: automation
   input:
     ems_take_control:
