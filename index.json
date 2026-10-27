@@ -2,6 +2,166 @@
   "index_version": 1,
   "blueprints": [
     {
+      "id": "solaredge_storedge_battery",
+      "path": "blueprints/battery/solaredge_storedge_battery.yaml",
+      "name": "Ventra-EMS — SolarEdge StorEdge battery",
+      "description": "Lets Ventra-EMS charge and discharge the battery of a SolarEdge StorEdge inverter through the storage remote control of the SolarEdge Modbus Multi integration. While the battery's Ventra-EMS \"take control\" (switch.ems_<id>_take_control) is on, the storage control mode is set to remote control and the Ventra-EMS setpoint (number.ems_<id>_battery_power, in W: − = charge, + = discharge) decides the command: discharge with the setpoint as discharge limit, or charge with it as charge limit (the other limit is 0). While take control is off, the storage control mode is disabled and the command mode set to off, so the inverter runs its own mode again. Checked every 5 seconds and when take control changes. The command mode is written every time (it keeps the inverter's remote control command timeout from running out); the rest only when it differs. The limits' unit (W or kW) is read from the entities and the values are kept inside their range. Version 1.",
+      "version": 1,
+      "device_types": [
+        "battery"
+      ],
+      "brand": "SolarEdge",
+      "min_ems_version": "1.0.561",
+      "max_ems_version": null,
+      "sha256": "923c72fb70c08b3459d29190ca0e216b9e21ab601350e7ed64c82be53dbfd7f0",
+      "inputs": [
+        {
+          "name": "ems_take_control",
+          "section": null,
+          "title": "Ventra-EMS take control",
+          "description": "On while Ventra-EMS controls the battery, e.g. switch.ems_storedge_take_control.",
+          "selector": {
+            "entity": {
+              "filter": [
+                {
+                  "integration": "ventra_ems",
+                  "domain": "switch"
+                }
+              ]
+            }
+          },
+          "ems_role": "take_control"
+        },
+        {
+          "name": "ems_setpoint",
+          "section": null,
+          "title": "Ventra-EMS battery power",
+          "description": "The battery setpoint made by Ventra-EMS (W), e.g. number.ems_storedge_battery_power.",
+          "selector": {
+            "entity": {
+              "filter": [
+                {
+                  "integration": "ventra_ems",
+                  "domain": "number"
+                }
+              ]
+            }
+          },
+          "ems_role": "setpoint"
+        },
+        {
+          "name": "storage_control_mode",
+          "section": null,
+          "title": "Storage control mode",
+          "description": "The SolarEdge select that hands the battery to remote control, e.g. select.solaredge_i1_storage_control_mode.",
+          "selector": {
+            "entity": {
+              "filter": [
+                {
+                  "domain": "select"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "storage_command_mode",
+          "section": null,
+          "title": "Storage command mode",
+          "description": "The SolarEdge select with the remote control command, e.g. select.solaredge_i1_storage_command_mode.",
+          "selector": {
+            "entity": {
+              "filter": [
+                {
+                  "domain": "select"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "charge_limit",
+          "section": null,
+          "title": "Storage charge limit",
+          "description": "The SolarEdge number with the charge power, e.g. number.solaredge_i1_storage_charge_limit.",
+          "selector": {
+            "entity": {
+              "filter": [
+                {
+                  "domain": "number"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "discharge_limit",
+          "section": null,
+          "title": "Storage discharge limit",
+          "description": "The SolarEdge number with the discharge power, e.g. number.solaredge_i1_storage_discharge_limit.",
+          "selector": {
+            "entity": {
+              "filter": [
+                {
+                  "domain": "number"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "option_remote",
+          "section": null,
+          "title": "Control mode option for \"controlled\"",
+          "description": "The storage control mode option that hands the battery to remote control.",
+          "selector": {
+            "text": {}
+          },
+          "default": "Remote Control"
+        },
+        {
+          "name": "option_released",
+          "section": null,
+          "title": "Control mode option for \"released\"",
+          "description": "The storage control mode option that gives the battery back to the inverter.",
+          "selector": {
+            "text": {}
+          },
+          "default": "Disabled"
+        },
+        {
+          "name": "option_charge",
+          "section": null,
+          "title": "Command for \"charge\"",
+          "description": "The storage command mode option used while Ventra-EMS charges the battery.",
+          "selector": {
+            "text": {}
+          },
+          "default": "Charge from Solar Power and Grid"
+        },
+        {
+          "name": "option_discharge",
+          "section": null,
+          "title": "Command for \"discharge\"",
+          "description": "The storage command mode option used while Ventra-EMS discharges the battery.",
+          "selector": {
+            "text": {}
+          },
+          "default": "Discharge to Maximize Export"
+        },
+        {
+          "name": "option_off",
+          "section": null,
+          "title": "Command for \"released\"",
+          "description": "The storage command mode option set when the battery goes back to the inverter.",
+          "selector": {
+            "text": {}
+          },
+          "default": "Solar Power Only (Off)"
+        }
+      ]
+    },
+    {
       "id": "solax_battery",
       "path": "blueprints/battery/solax_battery.yaml",
       "name": "Ventra-EMS — Solax battery",

@@ -1,0 +1,215 @@
+# ventra-ems-blueprint-version: 1
+# ventra-ems-device-types: battery
+# ventra-ems-brand: SolarEdge
+# ventra-ems-min-version: 1.0.561
+# ventra-ems-max-version:
+# Installed and updated by the Ventra-EMS add-on. Don't edit this file: an update replaces it.
+# To change it, copy it under another name first.
+blueprint:
+  name: Ventra-EMS — SolarEdge StorEdge battery
+  description: >-
+    Lets Ventra-EMS charge and discharge the battery of a SolarEdge StorEdge inverter through the
+    storage remote control of the SolarEdge Modbus Multi integration. While the battery's
+    Ventra-EMS "take control" (switch.ems_<id>_take_control) is on, the storage control mode is
+    set to remote control and the Ventra-EMS setpoint (number.ems_<id>_battery_power, in W:
+    − = charge, + = discharge) decides the command: discharge with the setpoint as discharge
+    limit, or charge with it as charge limit (the other limit is 0). While take control is off,
+    the storage control mode is disabled and the command mode set to off, so the inverter runs its
+    own mode again. Checked every 5 seconds and when take control changes. The command mode is
+    written every time (it keeps the inverter's remote control command timeout from running out);
+    the rest only when it differs. The limits' unit (W or kW) is read from the entities and the
+    values are kept inside their range. Version 1.
+  domain: automation
+  input:
+    ems_take_control:
+      name: Ventra-EMS take control
+      description: On while Ventra-EMS controls the battery, e.g. switch.ems_storedge_take_control.
+      selector:
+        entity:
+          filter:
+            - integration: ventra_ems
+              domain: switch
+    ems_setpoint:
+      name: Ventra-EMS battery power
+      description: The battery setpoint made by Ventra-EMS (W), e.g. number.ems_storedge_battery_power.
+      selector:
+        entity:
+          filter:
+            - integration: ventra_ems
+              domain: number
+    storage_control_mode:
+      name: Storage control mode
+      description: The SolarEdge select that hands the battery to remote control, e.g. select.solaredge_i1_storage_control_mode.
+      selector:
+        entity:
+          filter:
+            - domain: select
+    storage_command_mode:
+      name: Storage command mode
+      description: The SolarEdge select with the remote control command, e.g. select.solaredge_i1_storage_command_mode.
+      selector:
+        entity:
+          filter:
+            - domain: select
+    charge_limit:
+      name: Storage charge limit
+      description: The SolarEdge number with the charge power, e.g. number.solaredge_i1_storage_charge_limit.
+      selector:
+        entity:
+          filter:
+            - domain: number
+    discharge_limit:
+      name: Storage discharge limit
+      description: The SolarEdge number with the discharge power, e.g. number.solaredge_i1_storage_discharge_limit.
+      selector:
+        entity:
+          filter:
+            - domain: number
+    option_remote:
+      name: Control mode option for "controlled"
+      description: The storage control mode option that hands the battery to remote control.
+      default: Remote Control
+      selector:
+        text: {}
+    option_released:
+      name: Control mode option for "released"
+      description: The storage control mode option that gives the battery back to the inverter.
+      default: Disabled
+      selector:
+        text: {}
+    option_charge:
+      name: Command for "charge"
+      description: The storage command mode option used while Ventra-EMS charges the battery.
+      default: Charge from Solar Power and Grid
+      selector:
+        text: {}
+    option_discharge:
+      name: Command for "discharge"
+      description: The storage command mode option used while Ventra-EMS discharges the battery.
+      default: Discharge to Maximize Export
+      selector:
+        text: {}
+    option_off:
+      name: Command for "released"
+      description: The storage command mode option set when the battery goes back to the inverter.
+      default: Solar Power Only (Off)
+      selector:
+        text: {}
+
+variables:
+  ems_take_control: !input ems_take_control
+  ems_setpoint: !input ems_setpoint
+  storage_control_mode: !input storage_control_mode
+  storage_command_mode: !input storage_command_mode
+  charge_limit: !input charge_limit
+  discharge_limit: !input discharge_limit
+  option_remote: !input option_remote
+  option_released: !input option_released
+  option_off: !input option_off
+  setpoint: "{{ states(ems_setpoint) | float(0) }}"
+  # Ventra-EMS: − = charge, + = discharge (W) → the size, in each limit's own unit, inside its range
+  charge_power: >-
+    {% set watts = [0 - (states(ems_setpoint) | float(0)), 0] | max %}
+    {% set unit = (state_attr(charge_limit, 'unit_of_measurement') or 'W') | lower %}
+    {% set value = watts / 1000 if unit == 'kw' else watts %}
+    {% set low = state_attr(charge_limit, 'min') | float(value) %}
+    {% set high = state_attr(charge_limit, 'max') | float(value) %}
+    {% set value = [[value, low] | max, high] | min %}
+    {{ (value | round(3)) if unit == 'kw' else (value | int) }}
+  discharge_power: >-
+    {% set watts = [states(ems_setpoint) | float(0), 0] | max %}
+    {% set unit = (state_attr(discharge_limit, 'unit_of_measurement') or 'W') | lower %}
+    {% set value = watts / 1000 if unit == 'kw' else watts %}
+    {% set low = state_attr(discharge_limit, 'min') | float(value) %}
+    {% set high = state_attr(discharge_limit, 'max') | float(value) %}
+    {% set value = [[value, low] | max, high] | min %}
+    {{ (value | round(3)) if unit == 'kw' else (value | int) }}
+
+triggers:
+  - trigger: time_pattern          # every 5 s: the inverter stays in line with Ventra-EMS
+    seconds: /5
+  - trigger: state
+    entity_id: !input ems_take_control
+  - trigger: homeassistant
+    event: start
+
+conditions: []
+
+actions:
+  - choose:
+      - alias: Controlled
+        conditions:
+          - condition: state
+            entity_id: !input ems_take_control
+            state: "on"
+        sequence:
+          - if:
+              - condition: template
+                value_template: "{{ states(storage_control_mode) != option_remote }}"
+            then:
+              - action: select.select_option
+                target:
+                  entity_id: !input storage_control_mode
+                data:
+                  option: !input option_remote
+          - if:
+              - alias: Discharge
+                condition: template
+                value_template: "{{ setpoint > 0 }}"
+            then:
+              - action: select.select_option
+                target:
+                  entity_id: !input storage_command_mode
+                data:
+                  option: !input option_discharge
+            else:
+              - action: select.select_option
+                target:
+                  entity_id: !input storage_command_mode
+                data:
+                  option: !input option_charge
+          - if:
+              - condition: template
+                value_template: "{{ (states(charge_limit) | float(-1)) != (charge_power | float(0)) }}"
+            then:
+              - action: number.set_value
+                target:
+                  entity_id: !input charge_limit
+                data:
+                  value: "{{ charge_power }}"
+          - if:
+              - condition: template
+                value_template: "{{ (states(discharge_limit) | float(-1)) != (discharge_power | float(0)) }}"
+            then:
+              - action: number.set_value
+                target:
+                  entity_id: !input discharge_limit
+                data:
+                  value: "{{ discharge_power }}"
+      - alias: Released
+        conditions:
+          - condition: state
+            entity_id: !input ems_take_control
+            state: "off"
+        sequence:
+          - if:
+              - condition: template
+                value_template: "{{ states(storage_control_mode) != option_released }}"
+            then:
+              - action: select.select_option
+                target:
+                  entity_id: !input storage_control_mode
+                data:
+                  option: !input option_released
+          - if:
+              - condition: template
+                value_template: "{{ states(storage_command_mode) != option_off }}"
+            then:
+              - action: select.select_option
+                target:
+                  entity_id: !input storage_command_mode
+                data:
+                  option: !input option_off
+
+mode: single
+max_exceeded: silent
