@@ -26,6 +26,7 @@ tests/                               pytest: every blueprint, plus one test file
 | `battery/solax_battery.yaml` | A battery behind a Solax inverter (Solax Modbus remote control) | 1 |
 | `ev_charger/ocpp_ev_charger.yaml` | An EV charger in the OCPP integration (lbbrhzn/ocpp): power → charging current + charge control | 1 |
 | `heatpump/heatpump_relays.yaml` | A heat pump or air conditioner with relays (main, heating, cooling, hot water), each with optional extra conditions of your own | 1 |
+| `inverter/solaredge_inverter_limit.yaml` | A SolarEdge inverter (SolarEdge Modbus Multi): Ventra-EMS power limit → site limit + limit control mode | 1 |
 | `relay_device/relay_device.yaml` | A relay device, heat pump or AC relay switched by a switch / smart plug | 2 |
 
 ## The rule every glue follows

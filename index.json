@@ -551,6 +551,106 @@
       ]
     },
     {
+      "id": "solaredge_inverter_limit",
+      "path": "blueprints/inverter/solaredge_inverter_limit.yaml",
+      "name": "Ventra-EMS — SolarEdge inverter limit",
+      "description": "Lets Ventra-EMS limit the production of a SolarEdge inverter (SolarEdge Modbus Multi). While the inverter's Ventra-EMS \"limit control\" (switch.ems_<id>_limit_control) is on, the limit control mode is set to production control and the site limit follows the Ventra-EMS power limit (number.ems_<id>_power_limit, in W; the site limit's own unit W or kW is read and the value kept inside its range). While limit control is off, the limit control mode goes back to disabled, so the inverter produces freely. Checked every 5 seconds and when limit control changes; an entity is only written when its value differs. Version 1.",
+      "version": 1,
+      "device_types": [
+        "inverter"
+      ],
+      "brand": "SolarEdge",
+      "min_ems_version": "1.0.561",
+      "max_ems_version": null,
+      "sha256": "1765f8f391cef67d2964b079830c7ed1a83c67a9ffba043a1b8c90f885c13799",
+      "inputs": [
+        {
+          "name": "ems_limit_control",
+          "section": null,
+          "title": "Ventra-EMS limit control",
+          "description": "On while Ventra-EMS limits the inverter, e.g. switch.ems_solaredge_limit_control.",
+          "selector": {
+            "entity": {
+              "filter": [
+                {
+                  "integration": "ventra_ems",
+                  "domain": "switch"
+                }
+              ]
+            }
+          },
+          "ems_role": "limit_control"
+        },
+        {
+          "name": "ems_power_limit",
+          "section": null,
+          "title": "Ventra-EMS power limit",
+          "description": "The production limit made by Ventra-EMS (W), e.g. number.ems_solaredge_power_limit.",
+          "selector": {
+            "entity": {
+              "filter": [
+                {
+                  "integration": "ventra_ems",
+                  "domain": "number"
+                }
+              ]
+            }
+          },
+          "ems_role": "power_limit"
+        },
+        {
+          "name": "limit_control_mode",
+          "section": null,
+          "title": "Limit control mode",
+          "description": "The SolarEdge select that switches limiting on and off, e.g. select.solaredge_i1_limit_control_mode.",
+          "selector": {
+            "entity": {
+              "filter": [
+                {
+                  "domain": "select"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "site_limit",
+          "section": null,
+          "title": "Site limit",
+          "description": "The SolarEdge number with the production limit, e.g. number.solaredge_i1_site_limit.",
+          "selector": {
+            "entity": {
+              "filter": [
+                {
+                  "domain": "number"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "option_limiting",
+          "section": null,
+          "title": "Option for \"limiting\"",
+          "description": "The limit control mode option that applies the site limit.",
+          "selector": {
+            "text": {}
+          },
+          "default": "Production Control"
+        },
+        {
+          "name": "option_free",
+          "section": null,
+          "title": "Option for \"free\"",
+          "description": "The limit control mode option that lets the inverter produce freely.",
+          "selector": {
+            "text": {}
+          },
+          "default": "Disabled"
+        }
+      ]
+    },
+    {
       "id": "relay_device",
       "path": "blueprints/relay_device/relay_device.yaml",
       "name": "Ventra-EMS — relay device",

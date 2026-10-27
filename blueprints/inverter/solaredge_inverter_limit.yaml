@@ -1,0 +1,133 @@
+# ventra-ems-blueprint-version: 1
+# ventra-ems-device-types: inverter
+# ventra-ems-brand: SolarEdge
+# ventra-ems-min-version: 1.0.561
+# ventra-ems-max-version:
+# Installed and updated by the Ventra-EMS add-on. Don't edit this file: an update replaces it.
+# To change it, copy it under another name first.
+blueprint:
+  name: Ventra-EMS — SolarEdge inverter limit
+  description: >-
+    Lets Ventra-EMS limit the production of a SolarEdge inverter (SolarEdge Modbus Multi). While
+    the inverter's Ventra-EMS "limit control" (switch.ems_<id>_limit_control) is on, the limit
+    control mode is set to production control and the site limit follows the Ventra-EMS power
+    limit (number.ems_<id>_power_limit, in W; the site limit's own unit W or kW is read and the
+    value kept inside its range). While limit control is off, the limit control mode goes back to
+    disabled, so the inverter produces freely. Checked every 5 seconds and when limit control
+    changes; an entity is only written when its value differs. Version 1.
+  domain: automation
+  input:
+    ems_limit_control:
+      name: Ventra-EMS limit control
+      description: On while Ventra-EMS limits the inverter, e.g. switch.ems_solaredge_limit_control.
+      selector:
+        entity:
+          filter:
+            - integration: ventra_ems
+              domain: switch
+    ems_power_limit:
+      name: Ventra-EMS power limit
+      description: The production limit made by Ventra-EMS (W), e.g. number.ems_solaredge_power_limit.
+      selector:
+        entity:
+          filter:
+            - integration: ventra_ems
+              domain: number
+    limit_control_mode:
+      name: Limit control mode
+      description: The SolarEdge select that switches limiting on and off, e.g. select.solaredge_i1_limit_control_mode.
+      selector:
+        entity:
+          filter:
+            - domain: select
+    site_limit:
+      name: Site limit
+      description: The SolarEdge number with the production limit, e.g. number.solaredge_i1_site_limit.
+      selector:
+        entity:
+          filter:
+            - domain: number
+    option_limiting:
+      name: Option for "limiting"
+      description: The limit control mode option that applies the site limit.
+      default: Production Control
+      selector:
+        text: {}
+    option_free:
+      name: Option for "free"
+      description: The limit control mode option that lets the inverter produce freely.
+      default: Disabled
+      selector:
+        text: {}
+
+variables:
+  ems_limit_control: !input ems_limit_control
+  ems_power_limit: !input ems_power_limit
+  limit_control_mode: !input limit_control_mode
+  site_limit: !input site_limit
+  option_limiting: !input option_limiting
+  option_free: !input option_free
+  # Ventra-EMS: the limit in W → the site limit in its own unit, inside its range
+  target_limit: >-
+    {% set watts = states(ems_power_limit) | float(0) %}
+    {% set unit = (state_attr(site_limit, 'unit_of_measurement') or 'W') | lower %}
+    {% set value = watts / 1000 if unit == 'kw' else watts %}
+    {% set low = state_attr(site_limit, 'min') | float(value) %}
+    {% set high = state_attr(site_limit, 'max') | float(value) %}
+    {% set value = [[value, low] | max, high] | min %}
+    {{ (value | round(3)) if unit == 'kw' else (value | int) }}
+
+triggers:
+  - trigger: time_pattern          # every 5 s: the inverter stays in line with Ventra-EMS
+    seconds: /5
+  - trigger: state
+    entity_id: !input ems_limit_control
+  - trigger: homeassistant
+    event: start
+
+conditions: []
+
+actions:
+  - choose:
+      - alias: Limiting
+        conditions:
+          - condition: state
+            entity_id: !input ems_limit_control
+            state: "on"
+        sequence:
+          - if:
+              - condition: template
+                value_template: "{{ states(limit_control_mode) != option_limiting }}"
+            then:
+              - action: select.select_option
+                target:
+                  entity_id: !input limit_control_mode
+                data:
+                  option: !input option_limiting
+          - if:
+              - condition: template
+                value_template: "{{ (states(site_limit) | float(-1)) != (target_limit | float(0)) }}"
+            then:
+              - action: number.set_value
+                target:
+                  entity_id: !input site_limit
+                data:
+                  value: "{{ target_limit }}"
+      - alias: Free
+        conditions:
+          - condition: state
+            entity_id: !input ems_limit_control
+            state: "off"
+        sequence:
+          - if:
+              - condition: template
+                value_template: "{{ states(limit_control_mode) != option_free }}"
+            then:
+              - action: select.select_option
+                target:
+                  entity_id: !input limit_control_mode
+                data:
+                  option: !input option_free
+
+mode: single
+max_exceeded: silent
