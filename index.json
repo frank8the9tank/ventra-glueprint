@@ -312,6 +312,131 @@
       ]
     },
     {
+      "id": "solis_battery",
+      "path": "blueprints/battery/solis_battery.yaml",
+      "name": "Ventra-EMS — Solis hybrid battery",
+      "description": "Lets Ventra-EMS charge and discharge the battery of a Solis hybrid inverter through the remote control (RC force charge / discharge) of the Solis Modbus integration (Pho3niX90/solis_modbus). While the battery's Ventra-EMS \"take control\" (switch.ems_<id>_take_control) is on, the Ventra-EMS setpoint (number.ems_<id>_battery_power, in W: − = charge, + = discharge) decides the command: force discharge with the setpoint as discharge power, or force charge with it as charge power (the other power is 0). The command is selected first and every cycle: Solis only accepts the powers after it, and it keeps the inverter's RC timeout (1–30 min) from running out. The powers are only written when they differ. While take control is off, the command goes to \"None\", so the inverter runs its own mode again. Checked every 15 seconds and when take control changes. The powers' unit (W or kW) is read from the entities and the values are kept inside their range. Version 1.",
+      "version": 1,
+      "device_types": [
+        "battery"
+      ],
+      "brand": "Solis",
+      "min_ems_version": "1.0.561",
+      "max_ems_version": null,
+      "sha256": "abd25d57a64a23da85efbdc42c33571ee2191bee169587fbac41f28cc29bb231",
+      "inputs": [
+        {
+          "name": "ems_take_control",
+          "section": null,
+          "title": "Ventra-EMS take control",
+          "description": "On while Ventra-EMS controls the battery, e.g. switch.ems_solis_take_control.",
+          "selector": {
+            "entity": {
+              "filter": [
+                {
+                  "integration": "ventra_ems",
+                  "domain": "switch"
+                }
+              ]
+            }
+          },
+          "ems_role": "take_control"
+        },
+        {
+          "name": "ems_setpoint",
+          "section": null,
+          "title": "Ventra-EMS battery power",
+          "description": "The battery setpoint made by Ventra-EMS (W), e.g. number.ems_solis_battery_power.",
+          "selector": {
+            "entity": {
+              "filter": [
+                {
+                  "integration": "ventra_ems",
+                  "domain": "number"
+                }
+              ]
+            }
+          },
+          "ems_role": "setpoint"
+        },
+        {
+          "name": "force_command",
+          "section": null,
+          "title": "RC force charge/discharge",
+          "description": "The Solis select with the remote control command, e.g. select.rc_force_charge_discharge.",
+          "selector": {
+            "entity": {
+              "filter": [
+                {
+                  "domain": "select"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "charge_power",
+          "section": null,
+          "title": "RC force battery charge power",
+          "description": "The Solis number with the charge power, e.g. number.solis_s6_eh3p_rc_force_battery_charge_power.",
+          "selector": {
+            "entity": {
+              "filter": [
+                {
+                  "domain": "number"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "discharge_power",
+          "section": null,
+          "title": "RC force battery discharge power",
+          "description": "The Solis number with the discharge power, e.g. number.solis_s6_eh3p_rc_force_battery_discharge_power.",
+          "selector": {
+            "entity": {
+              "filter": [
+                {
+                  "domain": "number"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "option_charge",
+          "section": null,
+          "title": "Command for \"charge\"",
+          "description": "The RC force option used while Ventra-EMS charges the battery.",
+          "selector": {
+            "text": {}
+          },
+          "default": "Solis RC Force Battery Charge"
+        },
+        {
+          "name": "option_discharge",
+          "section": null,
+          "title": "Command for \"discharge\"",
+          "description": "The RC force option used while Ventra-EMS discharges the battery.",
+          "selector": {
+            "text": {}
+          },
+          "default": "Solis RC Force Battery Discharge"
+        },
+        {
+          "name": "option_off",
+          "section": null,
+          "title": "Command for \"released\"",
+          "description": "The RC force option that gives the battery back to the inverter.",
+          "selector": {
+            "text": {}
+          },
+          "default": "None"
+        }
+      ]
+    },
+    {
       "id": "ocpp_ev_charger",
       "path": "blueprints/ev_charger/ocpp_ev_charger.yaml",
       "name": "Ventra-EMS — OCPP EV charger",

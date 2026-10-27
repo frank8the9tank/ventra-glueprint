@@ -1,0 +1,175 @@
+# ventra-ems-blueprint-version: 1
+# ventra-ems-device-types: battery
+# ventra-ems-brand: Solis
+# ventra-ems-min-version: 1.0.561
+# ventra-ems-max-version:
+# Installed and updated by the Ventra-EMS add-on. Don't edit this file: an update replaces it.
+# To change it, copy it under another name first.
+blueprint:
+  name: Ventra-EMS — Solis hybrid battery
+  description: >-
+    Lets Ventra-EMS charge and discharge the battery of a Solis hybrid inverter through the remote
+    control (RC force charge / discharge) of the Solis Modbus integration (Pho3niX90/solis_modbus).
+    While the battery's Ventra-EMS "take control" (switch.ems_<id>_take_control) is on, the
+    Ventra-EMS setpoint (number.ems_<id>_battery_power, in W: − = charge, + = discharge) decides
+    the command: force discharge with the setpoint as discharge power, or force charge with it as
+    charge power (the other power is 0). The command is selected first and every cycle: Solis only
+    accepts the powers after it, and it keeps the inverter's RC timeout (1–30 min) from running
+    out. The powers are only written when they differ. While take control is off, the command goes
+    to "None", so the inverter runs its own mode again. Checked every 15 seconds and when take
+    control changes. The powers' unit (W or kW) is read from the entities and the values are kept
+    inside their range. Version 1.
+  domain: automation
+  input:
+    ems_take_control:
+      name: Ventra-EMS take control
+      description: On while Ventra-EMS controls the battery, e.g. switch.ems_solis_take_control.
+      selector:
+        entity:
+          filter:
+            - integration: ventra_ems
+              domain: switch
+    ems_setpoint:
+      name: Ventra-EMS battery power
+      description: The battery setpoint made by Ventra-EMS (W), e.g. number.ems_solis_battery_power.
+      selector:
+        entity:
+          filter:
+            - integration: ventra_ems
+              domain: number
+    force_command:
+      name: RC force charge/discharge
+      description: The Solis select with the remote control command, e.g. select.rc_force_charge_discharge.
+      selector:
+        entity:
+          filter:
+            - domain: select
+    charge_power:
+      name: RC force battery charge power
+      description: The Solis number with the charge power, e.g. number.solis_s6_eh3p_rc_force_battery_charge_power.
+      selector:
+        entity:
+          filter:
+            - domain: number
+    discharge_power:
+      name: RC force battery discharge power
+      description: The Solis number with the discharge power, e.g. number.solis_s6_eh3p_rc_force_battery_discharge_power.
+      selector:
+        entity:
+          filter:
+            - domain: number
+    option_charge:
+      name: Command for "charge"
+      description: The RC force option used while Ventra-EMS charges the battery.
+      default: Solis RC Force Battery Charge
+      selector:
+        text: {}
+    option_discharge:
+      name: Command for "discharge"
+      description: The RC force option used while Ventra-EMS discharges the battery.
+      default: Solis RC Force Battery Discharge
+      selector:
+        text: {}
+    option_off:
+      name: Command for "released"
+      description: The RC force option that gives the battery back to the inverter.
+      default: None
+      selector:
+        text: {}
+
+variables:
+  ems_take_control: !input ems_take_control
+  ems_setpoint: !input ems_setpoint
+  force_command: !input force_command
+  charge_power: !input charge_power
+  discharge_power: !input discharge_power
+  option_off: !input option_off
+  setpoint: "{{ states(ems_setpoint) | float(0) }}"
+  # Ventra-EMS: − = charge, + = discharge (W) → the size, in each power's own unit, inside its range
+  charge_value: >-
+    {% set watts = [0 - (states(ems_setpoint) | float(0)), 0] | max %}
+    {% set unit = (state_attr(charge_power, 'unit_of_measurement') or 'W') | lower %}
+    {% set value = watts / 1000 if unit == 'kw' else watts %}
+    {% set low = state_attr(charge_power, 'min') | float(value) %}
+    {% set high = state_attr(charge_power, 'max') | float(value) %}
+    {% set value = [[value, low] | max, high] | min %}
+    {{ (value | round(3)) if unit == 'kw' else (value | int) }}
+  discharge_value: >-
+    {% set watts = [states(ems_setpoint) | float(0), 0] | max %}
+    {% set unit = (state_attr(discharge_power, 'unit_of_measurement') or 'W') | lower %}
+    {% set value = watts / 1000 if unit == 'kw' else watts %}
+    {% set low = state_attr(discharge_power, 'min') | float(value) %}
+    {% set high = state_attr(discharge_power, 'max') | float(value) %}
+    {% set value = [[value, low] | max, high] | min %}
+    {{ (value | round(3)) if unit == 'kw' else (value | int) }}
+
+triggers:
+  - trigger: time_pattern          # every 15 s: the inverter stays in line with Ventra-EMS
+    seconds: /15
+  - trigger: state
+    entity_id: !input ems_take_control
+  - trigger: homeassistant
+    event: start
+
+conditions: []
+
+actions:
+  - choose:
+      - alias: Controlled
+        conditions:
+          - condition: state
+            entity_id: !input ems_take_control
+            state: "on"
+        sequence:
+          - if:
+              - alias: Discharge
+                condition: template
+                value_template: "{{ setpoint > 0 }}"
+            then:
+              - action: select.select_option
+                target:
+                  entity_id: !input force_command
+                data:
+                  option: !input option_discharge
+            else:
+              - action: select.select_option
+                target:
+                  entity_id: !input force_command
+                data:
+                  option: !input option_charge
+          - if:
+              - condition: template
+                value_template: "{{ (states(charge_power) | float(-1)) != (charge_value | float(0)) }}"
+            then:
+              - action: number.set_value
+                target:
+                  entity_id: !input charge_power
+                data:
+                  value: "{{ charge_value }}"
+          - if:
+              - condition: template
+                value_template: "{{ (states(discharge_power) | float(-1)) != (discharge_value | float(0)) }}"
+            then:
+              - action: number.set_value
+                target:
+                  entity_id: !input discharge_power
+                data:
+                  value: "{{ discharge_value }}"
+      - alias: Released
+        conditions:
+          - condition: state
+            entity_id: !input ems_take_control
+            state: "off"
+        sequence:
+          - if:
+              - condition: template
+                value_template: "{{ states(force_command) != option_off }}"
+            then:
+              - action: select.select_option
+                target:
+                  entity_id: !input force_command
+                data:
+                  option: !input option_off
+
+mode: single
+max_exceeded: silent
