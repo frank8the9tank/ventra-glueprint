@@ -1,4 +1,4 @@
-# ventra-ems-blueprint-version: 1
+# ventra-ems-blueprint-version: 2
 # ventra-ems-device-types: battery
 # ventra-ems-brand: Victron
 # ventra-ems-min-version: 1.0.561
@@ -14,9 +14,8 @@ blueprint:
     Ventra-EMS setpoint (number.ems_<id>_battery_power, in W: − = charge, + = discharge) is written
     to the ESS setpoint with the sign turned round, kept inside its range. While take control is
     off, the ESS setpoint goes back to the value for "released" (usually 0), so ESS runs on its own
-    again. Written when the Ventra-EMS setpoint or take control changes and checked every 15
-    seconds; only when the value differs. The ESS setpoint's unit (W or kW) is read from the
-    entity. Version 1.
+    again. Checked every 5 seconds and when take control changes; written only when the value
+    differs. The ESS setpoint's unit (W or kW) is read from the entity. Version 2.
   domain: automation
   input:
     ems_take_control:
@@ -72,12 +71,10 @@ variables:
     {{ ((released_value | float(0)) / 1000) | round(3) if unit == 'kw' else (released_value | int(0)) }}
 
 triggers:
-  - trigger: state                 # a new Ventra-EMS setpoint
-    entity_id: !input ems_setpoint
+  - trigger: time_pattern          # every 5 s: ESS stays in line with Ventra-EMS
+    seconds: /5
   - trigger: state
     entity_id: !input ems_take_control
-  - trigger: time_pattern          # every 15 s: ESS stays in line with Ventra-EMS
-    seconds: /15
   - trigger: homeassistant
     event: start
 

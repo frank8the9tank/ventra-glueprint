@@ -24,11 +24,12 @@ def test_picks_the_entities(blueprint):
     assert inputs["released_value"]["default"] == 0
 
 
-def test_runs_on_a_new_setpoint_on_take_control_and_every_15_seconds(blueprint):
+def test_runs_every_5_seconds_and_on_take_control(blueprint):
+    """Like the other battery glueprints: every 5 s, not on every change of the setpoint."""
     triggers = blueprint["triggers"]
-    assert {"trigger": "state", "entity_id": "ems_setpoint"} in triggers
+    assert {"trigger": "time_pattern", "seconds": "/5"} in triggers
     assert {"trigger": "state", "entity_id": "ems_take_control"} in triggers
-    assert {"trigger": "time_pattern", "seconds": "/15"} in triggers
+    assert not any(trigger.get("entity_id") == "ems_setpoint" for trigger in triggers)
 
 
 def test_controlled_writes_the_turned_setpoint_only_when_it_differs(blueprint):
