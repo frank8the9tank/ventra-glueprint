@@ -99,9 +99,7 @@ def entry_for(path: str) -> tuple:
     if not problems and maximum and ems_version(maximum) < ems_version(minimum):
         problems.append(f"{relative}: ventra-ems-max-version is below ventra-ems-min-version")
     with open(path, "rb") as f:
-        raw = f.read().replace(b"
-", b"
-")    # as git stores and GitHub serves it, also on Windows
+        raw = f.read().replace(b"\r\n", b"\n")    # as git stores and GitHub serves it, also on Windows
     digest = hashlib.sha256(raw).hexdigest()
     try:
         blueprint = (yaml.load(raw.decode("utf-8"), Loader=_Loader) or {}).get("blueprint") or {}
