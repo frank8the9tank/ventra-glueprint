@@ -575,7 +575,7 @@
       "brand": "Victron",
       "min_ems_version": "1.0.561",
       "max_ems_version": null,
-      "sha256": "3ea70b861135bf6c379c6ed84dd500a03dbbfadd7ab49a1daf7d8f4ea4fc6114",
+      "sha256": "0bdcb84c6836e8cf94ea10908e6f930b8fd551448a35b811ddf64ee7d34caf98",
       "inputs": [
         {
           "name": "ems_take_control",
@@ -833,7 +833,7 @@
       "brand": "OCPP",
       "min_ems_version": "1.0.638",
       "max_ems_version": null,
-      "sha256": "c1a72e3c4c342922c6eaa5c7302d1d2513345b86897819c7714166061101864f",
+      "sha256": "b6480df5618b06a9e5032d632c6d6138f9fa359ce97337136f3a458061ca4ede",
       "inputs": [
         {
           "name": "ems_take_control",
