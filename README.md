@@ -27,6 +27,7 @@ tests/                               pytest: every blueprint, plus one test file
 | `battery/solaredge_storedge_battery.yaml` | A battery behind a SolarEdge StorEdge inverter (SolarEdge Modbus Multi storage remote control); battery control only | 2 |
 | `battery/solis_battery.yaml` | A battery behind a Solis hybrid inverter (Solis Modbus, RC force charge / discharge) | 1 |
 | `ev_charger/ocpp_ev_charger.yaml` | An EV charger in the OCPP integration (lbbrhzn/ocpp): power → charging current + charge control | 1 |
+| `ev_charger/ocpp_ev_charger_current.yaml` | The same with the current Ventra-EMS works out (`number.ems_<id>_current`, A; Ventra-EMS ≥ 1.0.638): right for cars on 1 or 3 phases; no phases, voltage or step inputs (even amps from 6 A) | 1 |
 | `heatpump/heatpump_relays.yaml` | A heat pump with relays (main, heating, cooling, hot water), each with optional extra conditions of your own | 2 |
 | `air_conditioner/air_conditioner_relays.yaml` | An air conditioner with relays (heating, cooling), each with optional extra conditions of your own | 1 |
 | `inverter/solaredge_inverter_limit.yaml` | A SolarEdge inverter (SolarEdge Modbus Multi): Ventra-EMS power limit → site limit + limit control mode; production limiting only | 2 |

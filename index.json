@@ -741,6 +741,104 @@
       ]
     },
     {
+      "id": "ocpp_ev_charger_current",
+      "path": "blueprints/ev_charger/ocpp_ev_charger_current.yaml",
+      "name": "Ventra-EMS — OCPP EV charger (current)",
+      "description": "Lets Ventra-EMS charge an EV through a charger in the OCPP integration (lbbrhzn/ocpp), with the charging current Ventra-EMS works out itself (number.ems_<id>_current, in A), also when the car charges on 1 phase. While the charger's Ventra-EMS \"take control\" (switch.ems_<id>_take_control) is on and a car is plugged in, that current — rounded to even amps, at least 6 A — goes to the charger's maximum current and charging is switched on. While take control is off, charging is switched off and the maximum current goes back to 6 A. Checked every 15 seconds (OCPP chargers need time per command), when a car is plugged in and when take control changes. Version 1.",
+      "version": 1,
+      "device_types": [
+        "ev_charger"
+      ],
+      "brand": "OCPP",
+      "min_ems_version": "1.0.638",
+      "max_ems_version": null,
+      "sha256": "c1a72e3c4c342922c6eaa5c7302d1d2513345b86897819c7714166061101864f",
+      "inputs": [
+        {
+          "name": "ems_take_control",
+          "section": null,
+          "title": "Ventra-EMS take control",
+          "description": "On while Ventra-EMS charges the car, e.g. switch.ems_evcharger1_take_control.",
+          "selector": {
+            "entity": {
+              "filter": [
+                {
+                  "integration": "ventra_ems",
+                  "domain": "switch"
+                }
+              ]
+            }
+          },
+          "ems_role": "take_control"
+        },
+        {
+          "name": "ems_current",
+          "section": null,
+          "title": "Ventra-EMS charging current",
+          "description": "The charging current made by Ventra-EMS (A), e.g. number.ems_evcharger1_current.",
+          "selector": {
+            "entity": {
+              "filter": [
+                {
+                  "integration": "ventra_ems",
+                  "domain": "number"
+                }
+              ]
+            }
+          },
+          "ems_role": "current"
+        },
+        {
+          "name": "connector_status",
+          "section": null,
+          "title": "Charger connector status",
+          "description": "The OCPP connector status, e.g. sensor.charger1_status_connector.",
+          "selector": {
+            "entity": {
+              "filter": [
+                {
+                  "integration": "ocpp",
+                  "domain": "sensor"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "maximum_current",
+          "section": null,
+          "title": "Charger maximum current",
+          "description": "The OCPP maximum charging current (A), e.g. number.charger1_maximum_current.",
+          "selector": {
+            "entity": {
+              "filter": [
+                {
+                  "integration": "ocpp",
+                  "domain": "number"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "charge_control",
+          "section": null,
+          "title": "Charger charge control",
+          "description": "The OCPP switch that starts and stops charging, e.g. switch.charger1_charge_control.",
+          "selector": {
+            "entity": {
+              "filter": [
+                {
+                  "integration": "ocpp",
+                  "domain": "switch"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
       "id": "heatpump_relays",
       "path": "blueprints/heatpump/heatpump_relays.yaml",
       "name": "Ventra-EMS — heat pump (relays)",
