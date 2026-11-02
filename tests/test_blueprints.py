@@ -75,3 +75,17 @@ def test_the_index_lists_the_inputs_with_their_ventra_ems_role():
     assert "ems_role" not in inputs["heating_switch"] and inputs["heating_switch"]["default"] == ""
     assert inputs["heating_conditions"]["selector"] == {"condition": {}}
     assert heatpump["name"].startswith("Ventra-EMS") and heatpump["description"]
+
+
+INFO_MAX = 180   # like the add-on's own info marks (ventra-docs DEVELOPMENT.md): 2–3 lines
+
+
+@pytest.mark.parametrize("path", BLUEPRINTS, ids=os.path.basename)
+def test_every_input_has_a_short_explanation(path):
+    """The add-on shows an input's description as its info mark (ⓘ) in the glue automation card:
+    the explanation is maintained here, with the blueprint (user, 2026-11-02)."""
+    inputs   = build_index.read_inputs(load(path)["blueprint"])
+    missing  = [item["name"] for item in inputs if not item["description"]]
+    too_long = {item["name"]: len(item["description"]) for item in inputs if len(item["description"]) > INFO_MAX}
+    assert not missing, f"inputs without a description: {missing}"
+    assert not too_long, f"descriptions over {INFO_MAX} characters: {too_long}"

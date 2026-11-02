@@ -15,6 +15,7 @@ Project documentation lives in `ventra-docs` (`../ventra-docs/`): `SYSTEM.md` (r
   Set `max-version` only when a Ventra-EMS change breaks the blueprint.
 - After a change run `python tools/build_index.py` and commit `index.json` with it.
 - Every blueprint has its own test file in `tests/`.
+- **Every input has a description of at most 180 characters**: the add-on shows it as the input's info mark (ⓘ); the explanation lives here, not in the add-on (no number, unlike the add-on's own info marks). `tests/test_blueprints.py` checks it.
 - Entity names and units follow the add-on (`control_entities.py`, setpoints in W). When the add-on
   changes them, check every blueprint here and set `max-version` / make a new file where needed.
 
