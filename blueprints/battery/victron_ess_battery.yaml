@@ -1,0 +1,120 @@
+# ventra-ems-blueprint-version: 1
+# ventra-ems-device-types: battery
+# ventra-ems-brand: Victron
+# ventra-ems-min-version: 1.0.561
+# ventra-ems-max-version:
+# Installed and updated by the Ventra-EMS add-on. Don't edit this file: an update replaces it.
+# To change it, copy it under another name first.
+blueprint:
+  name: Ventra-EMS — Victron ESS battery
+  description: >-
+    Lets Ventra-EMS charge and discharge a stand-alone Victron ESS battery through its ESS AC grid
+    setpoint (e.g. number.ess_ac_grid_setpoint, in W: + = charge the battery, − = discharge it).
+    While the battery's Ventra-EMS "take control" (switch.ems_<id>_take_control) is on, the
+    Ventra-EMS setpoint (number.ems_<id>_battery_power, in W: − = charge, + = discharge) is written
+    to the ESS setpoint with the sign turned round, kept inside its range. While take control is
+    off, the ESS setpoint goes back to the value for "released" (usually 0), so ESS runs on its own
+    again. Written when the Ventra-EMS setpoint or take control changes and checked every 15
+    seconds; only when the value differs. The ESS setpoint's unit (W or kW) is read from the
+    entity. Version 1.
+  domain: automation
+  input:
+    ems_take_control:
+      name: Ventra-EMS take control
+      description: On while Ventra-EMS controls the battery, e.g. switch.ems_victron_take_control.
+      selector:
+        entity:
+          filter:
+            - integration: ventra_ems
+              domain: switch
+    ems_setpoint:
+      name: Ventra-EMS battery power
+      description: The battery setpoint made by Ventra-EMS (W, − = charge, + = discharge), e.g. number.ems_victron_battery_power.
+      selector:
+        entity:
+          filter:
+            - integration: ventra_ems
+              domain: number
+    ess_setpoint:
+      name: ESS AC grid setpoint
+      description: The Victron ESS setpoint (+ = charge the battery, − = discharge it), e.g. number.ess_ac_grid_setpoint.
+      selector:
+        entity:
+          filter:
+            - domain: number
+    released_value:
+      name: Setpoint when released
+      description: The ESS setpoint while Ventra-EMS doesn't control the battery (W), usually 0.
+      default: 0
+      selector:
+        number:
+          min: -10000
+          max: 10000
+          step: 1
+          unit_of_measurement: W
+          mode: box
+
+variables:
+  ems_setpoint: !input ems_setpoint
+  ess_setpoint: !input ess_setpoint
+  released_value: !input released_value
+  # Ventra-EMS: − = charge, + = discharge (W) → ESS: + = charge, − = discharge, in its unit and range
+  ess_value: >-
+    {% set watts = 0 - (states(ems_setpoint) | float(0)) %}
+    {% set unit = (state_attr(ess_setpoint, 'unit_of_measurement') or 'W') | lower %}
+    {% set value = watts / 1000 if unit == 'kw' else watts %}
+    {% set low = state_attr(ess_setpoint, 'min') | float(value) %}
+    {% set high = state_attr(ess_setpoint, 'max') | float(value) %}
+    {% set value = [[value, low] | max, high] | min %}
+    {{ (value | round(3)) if unit == 'kw' else (value | int) }}
+  released: >-
+    {% set unit = (state_attr(ess_setpoint, 'unit_of_measurement') or 'W') | lower %}
+    {{ ((released_value | float(0)) / 1000) | round(3) if unit == 'kw' else (released_value | int(0)) }}
+
+triggers:
+  - trigger: state                 # a new Ventra-EMS setpoint
+    entity_id: !input ems_setpoint
+  - trigger: state
+    entity_id: !input ems_take_control
+  - trigger: time_pattern          # every 15 s: ESS stays in line with Ventra-EMS
+    seconds: /15
+  - trigger: homeassistant
+    event: start
+
+conditions: []
+
+actions:
+  - choose:
+      - alias: Controlled
+        conditions:
+          - condition: state
+            entity_id: !input ems_take_control
+            state: "on"
+        sequence:
+          - if:
+              - condition: template
+                value_template: "{{ (states(ess_setpoint) | float(-99999)) != (ess_value | float(0)) }}"
+            then:
+              - action: number.set_value
+                target:
+                  entity_id: !input ess_setpoint
+                data:
+                  value: "{{ ess_value }}"
+      - alias: Released
+        conditions:
+          - condition: state
+            entity_id: !input ems_take_control
+            state: "off"
+        sequence:
+          - if:
+              - condition: template
+                value_template: "{{ (states(ess_setpoint) | float(-99999)) != (released | float(0)) }}"
+            then:
+              - action: number.set_value
+                target:
+                  entity_id: !input ess_setpoint
+                data:
+                  value: "{{ released }}"
+
+mode: single
+max_exceeded: silent

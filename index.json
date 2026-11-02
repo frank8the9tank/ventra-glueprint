@@ -564,6 +564,87 @@
       ]
     },
     {
+      "id": "victron_ess_battery",
+      "path": "blueprints/battery/victron_ess_battery.yaml",
+      "name": "Ventra-EMS — Victron ESS battery",
+      "description": "Lets Ventra-EMS charge and discharge a stand-alone Victron ESS battery through its ESS AC grid setpoint (e.g. number.ess_ac_grid_setpoint, in W: + = charge the battery, − = discharge it). While the battery's Ventra-EMS \"take control\" (switch.ems_<id>_take_control) is on, the Ventra-EMS setpoint (number.ems_<id>_battery_power, in W: − = charge, + = discharge) is written to the ESS setpoint with the sign turned round, kept inside its range. While take control is off, the ESS setpoint goes back to the value for \"released\" (usually 0), so ESS runs on its own again. Written when the Ventra-EMS setpoint or take control changes and checked every 15 seconds; only when the value differs. The ESS setpoint's unit (W or kW) is read from the entity. Version 1.",
+      "version": 1,
+      "device_types": [
+        "battery"
+      ],
+      "brand": "Victron",
+      "min_ems_version": "1.0.561",
+      "max_ems_version": null,
+      "sha256": "2ba6fe987dda7b6a23e924988c8393be68b4a8a2427761dc5cec8c9925d64967",
+      "inputs": [
+        {
+          "name": "ems_take_control",
+          "section": null,
+          "title": "Ventra-EMS take control",
+          "description": "On while Ventra-EMS controls the battery, e.g. switch.ems_victron_take_control.",
+          "selector": {
+            "entity": {
+              "filter": [
+                {
+                  "integration": "ventra_ems",
+                  "domain": "switch"
+                }
+              ]
+            }
+          },
+          "ems_role": "take_control"
+        },
+        {
+          "name": "ems_setpoint",
+          "section": null,
+          "title": "Ventra-EMS battery power",
+          "description": "The battery setpoint made by Ventra-EMS (W, − = charge, + = discharge), e.g. number.ems_victron_battery_power.",
+          "selector": {
+            "entity": {
+              "filter": [
+                {
+                  "integration": "ventra_ems",
+                  "domain": "number"
+                }
+              ]
+            }
+          },
+          "ems_role": "setpoint"
+        },
+        {
+          "name": "ess_setpoint",
+          "section": null,
+          "title": "ESS AC grid setpoint",
+          "description": "The Victron ESS setpoint (+ = charge the battery, − = discharge it), e.g. number.ess_ac_grid_setpoint.",
+          "selector": {
+            "entity": {
+              "filter": [
+                {
+                  "domain": "number"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "released_value",
+          "section": null,
+          "title": "Setpoint when released",
+          "description": "The ESS setpoint while Ventra-EMS doesn't control the battery (W), usually 0.",
+          "selector": {
+            "number": {
+              "min": -10000,
+              "max": 10000,
+              "step": 1,
+              "unit_of_measurement": "W",
+              "mode": "box"
+            }
+          },
+          "default": 0
+        }
+      ]
+    },
+    {
       "id": "ocpp_ev_charger",
       "path": "blueprints/ev_charger/ocpp_ev_charger.yaml",
       "name": "Ventra-EMS — OCPP EV charger",
