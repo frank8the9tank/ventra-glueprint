@@ -1,0 +1,263 @@
+# ventra-ems-blueprint-version: 1
+# ventra-ems-device-types: battery
+# ventra-ems-brand: Solax
+# ventra-ems-min-version: 1.0.662
+# ventra-ems-max-version:
+# Installed and updated by the Ventra-EMS add-on. Don't edit this file: an update replaces it.
+# To change it, copy it under another name first.
+blueprint:
+  name: Ventra-EMS — Solax hybrid G4/G5/G6 (battery + export limit)
+  description: >-
+    Lets Ventra-EMS drive a Solax hybrid inverter (Gen4, Gen5, Gen6) with one automation: its battery
+    and its PV power, so Ventra-EMS can also limit the export. It uses the "PV and BAT control" remote
+    control (mode 8) of the Solax Modbus integration. While the battery's Ventra-EMS "take control" is
+    on, the battery follows the Ventra-EMS setpoint (W, + = discharge, − = charge) and the PV power is
+    capped at the inverter's Ventra-EMS power limit when its "limit control" is on (else the maximum
+    PV power). While only the limit control is on, the inverter balances the house itself ("Enabled
+    Grid Control", grid target 0) and the PV power is capped. While both are off, remote control is
+    disabled and the inverter runs its own mode again. Written every 5 seconds. Older Solax inverters
+    without mode 8: the glueprint "Solax battery". Version 1.
+  domain: automation
+  input:
+    ems_take_control:
+      name: Ventra-EMS take control
+      description: On while Ventra-EMS controls the battery, e.g. switch.ems_solax_take_control.
+      selector:
+        entity:
+          filter:
+            - integration: ventra_ems
+              domain: switch
+    ems_setpoint:
+      name: Ventra-EMS battery power
+      description: The battery setpoint made by Ventra-EMS (W), e.g. number.ems_solax_battery_power.
+      selector:
+        entity:
+          filter:
+            - integration: ventra_ems
+              domain: number
+    ems_limit_control:
+      name: Ventra-EMS limit control
+      description: On while Ventra-EMS limits the inverter's PV power, e.g. switch.ems_solax_limit_control.
+      selector:
+        entity:
+          filter:
+            - integration: ventra_ems
+              domain: switch
+    ems_power_limit:
+      name: Ventra-EMS power limit
+      description: The PV power limit made by Ventra-EMS (W), e.g. number.ems_solax_power_limit.
+      selector:
+        entity:
+          filter:
+            - integration: ventra_ems
+              domain: number
+    power_control_mode:
+      name: Remote control power control mode
+      description: The Solax select for the mode 8/9 remote control.
+      default: select.solax_remotecontrol_power_control_mode
+      selector:
+        entity:
+          filter:
+            - domain: select
+    pv_power_limit:
+      name: Remote control PV power limit
+      description: The Solax number that caps the PV power in mode 8 (W).
+      default: number.solax_remotecontrol_pv_power_limit
+      selector:
+        entity:
+          filter:
+            - domain: number
+    push_power:
+      name: Remote control push mode power
+      description: The Solax number with the battery power in mode 8 (W, + = discharge, − = charge).
+      default: number.solax_remotecontrol_push_mode_power_8_9
+      selector:
+        entity:
+          filter:
+            - domain: number
+    import_limit:
+      name: Remote control import limit
+      description: The Solax number with the import limit of the remote control (W).
+      default: number.solax_remotecontrol_import_limit
+      selector:
+        entity:
+          filter:
+            - domain: number
+    autorepeat_duration:
+      name: Remote control autorepeat duration
+      description: The Solax number that keeps the remote control command active between triggers.
+      default: number.solax_remotecontrol_autorepeat_duration
+      selector:
+        entity:
+          filter:
+            - domain: number
+    trigger_button:
+      name: Remote control trigger (mode 8/9)
+      description: The Solax button that sends the mode 8/9 remote control command to the inverter.
+      default: button.solax_powercontrolmode8_trigger
+      selector:
+        entity:
+          filter:
+            - domain: button
+    max_pv_w:
+      name: Maximum PV power (W)
+      description: The PV power limit while Ventra-EMS doesn't limit, at least what the panels can make.
+      default: 30000
+      selector:
+        number:
+          min: 0
+          max: 30000
+          step: 100
+          unit_of_measurement: W
+          mode: box
+    import_limit_w:
+      name: Import limit (W)
+      description: >-
+        High, so the integration's own import limiting doesn't interfere: Ventra-EMS keeps the
+        maximum import itself.
+      default: 30000
+      selector:
+        number:
+          min: 0
+          max: 30000
+          step: 100
+          unit_of_measurement: W
+          mode: box
+    autorepeat_secs:
+      name: Autorepeat (seconds)
+      description: >-
+        How long the integration repeats the last command by itself. Longer than the 5-second
+        cycle, so the inverter keeps it between writes.
+      default: 3660
+      selector:
+        number:
+          min: 10
+          max: 86400
+          step: 1
+          unit_of_measurement: s
+          mode: box
+    option_battery:
+      name: Option for "battery and limit"
+      description: The power control mode option for Ventra-EMS's battery power and PV limit.
+      default: Mode 8 - PV and BAT control - Duration
+      selector:
+        text: {}
+    option_limit:
+      name: Option for "limit only"
+      description: The option where the inverter balances the house itself and only the PV limit applies.
+      default: Enabled Grid Control
+      selector:
+        text: {}
+    option_released:
+      name: Option for "released"
+      description: The power control mode option that gives the inverter back its own mode.
+      default: Disabled
+      selector:
+        text: {}
+
+variables:
+  ems_take_control: !input ems_take_control
+  ems_setpoint: !input ems_setpoint
+  ems_limit_control: !input ems_limit_control
+  ems_power_limit: !input ems_power_limit
+  power_control_mode: !input power_control_mode
+  pv_power_limit: !input pv_power_limit
+  push_power: !input push_power
+  max_pv_w: !input max_pv_w
+  option_released: !input option_released
+  # battery: Ventra-EMS controls the battery (and the limit when on); limit: only the limit; off: neither
+  control: >-
+    {% if is_state(ems_take_control, 'on') %}battery{% elif is_state(ems_limit_control, 'on') %}limit{% else %}off{% endif %}
+  # The battery power: Ventra-EMS and Solax both + = discharge (W); 0 while only the limit applies.
+  # In the entity's own unit, inside its range.
+  target_push: >-
+    {% set watts = (states(ems_setpoint) | float(0)) if control == 'battery' else 0 %}
+    {% set unit = (state_attr(push_power, 'unit_of_measurement') or 'W') | lower %}
+    {% set value = watts / 1000 if unit == 'kw' else watts %}
+    {% set low = state_attr(push_power, 'min') | float(value) %}
+    {% set high = state_attr(push_power, 'max') | float(value) %}
+    {% set value = [[value, low] | max, high] | min %}
+    {{ (value | round(3)) if unit == 'kw' else (value | int) }}
+  # The PV cap: Ventra-EMS's power limit while its limit control is on, else the maximum PV power.
+  target_pv_limit: >-
+    {% set watts = (states(ems_power_limit) | float(max_pv_w | float(30000))) if is_state(ems_limit_control, 'on') else (max_pv_w | float(30000)) %}
+    {% set unit = (state_attr(pv_power_limit, 'unit_of_measurement') or 'W') | lower %}
+    {% set value = watts / 1000 if unit == 'kw' else watts %}
+    {% set low = state_attr(pv_power_limit, 'min') | float(value) %}
+    {% set high = state_attr(pv_power_limit, 'max') | float(value) %}
+    {% set value = [[value, low] | max, high] | min %}
+    {{ (value | round(3)) if unit == 'kw' else (value | int) }}
+
+triggers:
+  - trigger: state
+    entity_id: !input ems_take_control
+  - trigger: state
+    entity_id: !input ems_limit_control
+  - trigger: homeassistant
+    event: start
+  - trigger: time_pattern          # every 5 s: the inverter stays in line with Ventra-EMS
+    seconds: /5
+
+conditions: []
+
+actions:
+  - choose:
+      - conditions:
+          - condition: template
+            value_template: "{{ control in ['battery', 'limit'] }}"
+        sequence:
+          - action: number.set_value
+            target:
+              entity_id: !input autorepeat_duration
+            data:
+              value: !input autorepeat_secs
+          - action: number.set_value
+            target:
+              entity_id: !input import_limit
+            data:
+              value: !input import_limit_w
+          - action: number.set_value
+            target:
+              entity_id: !input pv_power_limit
+            data:
+              value: "{{ target_pv_limit }}"
+          - action: number.set_value
+            target:
+              entity_id: !input push_power
+            data:
+              value: "{{ target_push }}"
+          - if:
+              - condition: template
+                value_template: "{{ control == 'battery' }}"
+            then:
+              - action: select.select_option
+                target:
+                  entity_id: !input power_control_mode
+                data:
+                  option: !input option_battery
+            else:
+              - action: select.select_option
+                target:
+                  entity_id: !input power_control_mode
+                data:
+                  option: !input option_limit
+          - action: button.press
+            target:
+              entity_id: !input trigger_button
+      - conditions:
+          - condition: template
+            value_template: "{{ control == 'off' and states(power_control_mode) != option_released }}"
+        sequence:
+          - action: number.set_value
+            target:
+              entity_id: !input push_power
+            data:
+              value: 0
+          - action: select.select_option
+            target:
+              entity_id: !input power_control_mode
+            data:
+              option: !input option_released
+
+mode: single
+max_exceeded: silent

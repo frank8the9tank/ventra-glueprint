@@ -439,6 +439,264 @@
       ]
     },
     {
+      "id": "solax_hybrid",
+      "path": "blueprints/battery/solax_hybrid.yaml",
+      "name": "Ventra-EMS — Solax hybrid G4/G5/G6 (battery + export limit)",
+      "description": "Lets Ventra-EMS drive a Solax hybrid inverter (Gen4, Gen5, Gen6) with one automation: its battery and its PV power, so Ventra-EMS can also limit the export. It uses the \"PV and BAT control\" remote control (mode 8) of the Solax Modbus integration. While the battery's Ventra-EMS \"take control\" is on, the battery follows the Ventra-EMS setpoint (W, + = discharge, − = charge) and the PV power is capped at the inverter's Ventra-EMS power limit when its \"limit control\" is on (else the maximum PV power). While only the limit control is on, the inverter balances the house itself (\"Enabled Grid Control\", grid target 0) and the PV power is capped. While both are off, remote control is disabled and the inverter runs its own mode again. Written every 5 seconds. Older Solax inverters without mode 8: the glueprint \"Solax battery\". Version 1.",
+      "version": 1,
+      "device_types": [
+        "battery"
+      ],
+      "brand": "Solax",
+      "min_ems_version": "1.0.662",
+      "max_ems_version": null,
+      "sha256": "abca148e0245afdaf43b0cae733b2af72b100253193371ca9e3b15117a7d3f2f",
+      "inputs": [
+        {
+          "name": "ems_take_control",
+          "section": null,
+          "title": "Ventra-EMS take control",
+          "description": "On while Ventra-EMS controls the battery, e.g. switch.ems_solax_take_control.",
+          "selector": {
+            "entity": {
+              "filter": [
+                {
+                  "integration": "ventra_ems",
+                  "domain": "switch"
+                }
+              ]
+            }
+          },
+          "ems_role": "take_control"
+        },
+        {
+          "name": "ems_setpoint",
+          "section": null,
+          "title": "Ventra-EMS battery power",
+          "description": "The battery setpoint made by Ventra-EMS (W), e.g. number.ems_solax_battery_power.",
+          "selector": {
+            "entity": {
+              "filter": [
+                {
+                  "integration": "ventra_ems",
+                  "domain": "number"
+                }
+              ]
+            }
+          },
+          "ems_role": "setpoint"
+        },
+        {
+          "name": "ems_limit_control",
+          "section": null,
+          "title": "Ventra-EMS limit control",
+          "description": "On while Ventra-EMS limits the inverter's PV power, e.g. switch.ems_solax_limit_control.",
+          "selector": {
+            "entity": {
+              "filter": [
+                {
+                  "integration": "ventra_ems",
+                  "domain": "switch"
+                }
+              ]
+            }
+          },
+          "ems_role": "limit_control"
+        },
+        {
+          "name": "ems_power_limit",
+          "section": null,
+          "title": "Ventra-EMS power limit",
+          "description": "The PV power limit made by Ventra-EMS (W), e.g. number.ems_solax_power_limit.",
+          "selector": {
+            "entity": {
+              "filter": [
+                {
+                  "integration": "ventra_ems",
+                  "domain": "number"
+                }
+              ]
+            }
+          },
+          "ems_role": "power_limit"
+        },
+        {
+          "name": "power_control_mode",
+          "section": null,
+          "title": "Remote control power control mode",
+          "description": "The Solax select for the mode 8/9 remote control.",
+          "selector": {
+            "entity": {
+              "filter": [
+                {
+                  "domain": "select"
+                }
+              ]
+            }
+          },
+          "default": "select.solax_remotecontrol_power_control_mode"
+        },
+        {
+          "name": "pv_power_limit",
+          "section": null,
+          "title": "Remote control PV power limit",
+          "description": "The Solax number that caps the PV power in mode 8 (W).",
+          "selector": {
+            "entity": {
+              "filter": [
+                {
+                  "domain": "number"
+                }
+              ]
+            }
+          },
+          "default": "number.solax_remotecontrol_pv_power_limit"
+        },
+        {
+          "name": "push_power",
+          "section": null,
+          "title": "Remote control push mode power",
+          "description": "The Solax number with the battery power in mode 8 (W, + = discharge, − = charge).",
+          "selector": {
+            "entity": {
+              "filter": [
+                {
+                  "domain": "number"
+                }
+              ]
+            }
+          },
+          "default": "number.solax_remotecontrol_push_mode_power_8_9"
+        },
+        {
+          "name": "import_limit",
+          "section": null,
+          "title": "Remote control import limit",
+          "description": "The Solax number with the import limit of the remote control (W).",
+          "selector": {
+            "entity": {
+              "filter": [
+                {
+                  "domain": "number"
+                }
+              ]
+            }
+          },
+          "default": "number.solax_remotecontrol_import_limit"
+        },
+        {
+          "name": "autorepeat_duration",
+          "section": null,
+          "title": "Remote control autorepeat duration",
+          "description": "The Solax number that keeps the remote control command active between triggers.",
+          "selector": {
+            "entity": {
+              "filter": [
+                {
+                  "domain": "number"
+                }
+              ]
+            }
+          },
+          "default": "number.solax_remotecontrol_autorepeat_duration"
+        },
+        {
+          "name": "trigger_button",
+          "section": null,
+          "title": "Remote control trigger (mode 8/9)",
+          "description": "The Solax button that sends the mode 8/9 remote control command to the inverter.",
+          "selector": {
+            "entity": {
+              "filter": [
+                {
+                  "domain": "button"
+                }
+              ]
+            }
+          },
+          "default": "button.solax_powercontrolmode8_trigger"
+        },
+        {
+          "name": "max_pv_w",
+          "section": null,
+          "title": "Maximum PV power (W)",
+          "description": "The PV power limit while Ventra-EMS doesn't limit, at least what the panels can make.",
+          "selector": {
+            "number": {
+              "min": 0,
+              "max": 30000,
+              "step": 100,
+              "unit_of_measurement": "W",
+              "mode": "box"
+            }
+          },
+          "default": 30000
+        },
+        {
+          "name": "import_limit_w",
+          "section": null,
+          "title": "Import limit (W)",
+          "description": "High, so the integration's own import limiting doesn't interfere: Ventra-EMS keeps the maximum import itself.",
+          "selector": {
+            "number": {
+              "min": 0,
+              "max": 30000,
+              "step": 100,
+              "unit_of_measurement": "W",
+              "mode": "box"
+            }
+          },
+          "default": 30000
+        },
+        {
+          "name": "autorepeat_secs",
+          "section": null,
+          "title": "Autorepeat (seconds)",
+          "description": "How long the integration repeats the last command by itself. Longer than the 5-second cycle, so the inverter keeps it between writes.",
+          "selector": {
+            "number": {
+              "min": 10,
+              "max": 86400,
+              "step": 1,
+              "unit_of_measurement": "s",
+              "mode": "box"
+            }
+          },
+          "default": 3660
+        },
+        {
+          "name": "option_battery",
+          "section": null,
+          "title": "Option for \"battery and limit\"",
+          "description": "The power control mode option for Ventra-EMS's battery power and PV limit.",
+          "selector": {
+            "text": {}
+          },
+          "default": "Mode 8 - PV and BAT control - Duration"
+        },
+        {
+          "name": "option_limit",
+          "section": null,
+          "title": "Option for \"limit only\"",
+          "description": "The option where the inverter balances the house itself and only the PV limit applies.",
+          "selector": {
+            "text": {}
+          },
+          "default": "Enabled Grid Control"
+        },
+        {
+          "name": "option_released",
+          "section": null,
+          "title": "Option for \"released\"",
+          "description": "The power control mode option that gives the inverter back its own mode.",
+          "selector": {
+            "text": {}
+          },
+          "default": "Disabled"
+        }
+      ]
+    },
+    {
       "id": "solis_battery",
       "path": "blueprints/battery/solis_battery.yaml",
       "name": "Ventra-EMS — Solis hybrid battery",
