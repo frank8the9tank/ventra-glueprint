@@ -1,7 +1,7 @@
-# ventra-ems-blueprint-version: 1
+# ventra-ems-blueprint-version: 2
 # ventra-ems-device-types: ev_charger
 # ventra-ems-brand: OCPP
-# ventra-ems-min-version: 1.0.561
+# ventra-ems-min-version: 1.0.686
 # ventra-ems-max-version:
 # Installed and updated by the Ventra-EMS add-on. Don't edit this file: an update replaces it.
 # To change it, copy it under another name first.
@@ -15,7 +15,7 @@ blueprint:
     current and rounded to the current step) on the charger's maximum current, and charging is
     switched on. While take control is off, charging is switched off and the maximum current goes
     back to the minimum. Checked every 15 seconds (OCPP chargers need time per command), when a car
-    is plugged in and when take control changes. Version 1.
+    is plugged in and when take control changes. Version 2.
   domain: automation
   input:
     ems_take_control:
@@ -104,7 +104,7 @@ blueprint:
     current_step:
       name: Current step
       description: The charging current is rounded to a multiple of this (A); some chargers only take even amps.
-      default: 1
+      default: 2
       selector:
         number:
           min: 1
