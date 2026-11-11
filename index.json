@@ -906,15 +906,15 @@
       "id": "ocpp_ev_charger",
       "path": "blueprints/ev_charger/ocpp_ev_charger.yaml",
       "name": "Ventra-EMS — OCPP EV charger",
-      "description": "Lets Ventra-EMS charge an EV through a charger in the OCPP integration (lbbrhzn/ocpp). While the charger's Ventra-EMS \"take control\" (switch.ems_<id>_take_control) is on and a car is plugged in, the Ventra-EMS power (number.ems_<id>_power, in W: − = charging) is turned into a charging current (amps = power ÷ (phases × voltage), kept between the minimum and maximum current and rounded to the current step) on the charger's maximum current, and charging is switched on. While take control is off, charging is switched off and the maximum current goes back to the minimum. Checked every 15 seconds (OCPP chargers need time per command), when a car is plugged in and when take control changes. Version 2.",
-      "version": 2,
+      "description": "Lets Ventra-EMS charge an EV through a charger in the OCPP integration (lbbrhzn/ocpp). While the charger's Ventra-EMS \"take control\" (switch.ems_<id>_take_control) is on and a car is plugged in, the Ventra-EMS power (number.ems_<id>_power, in W: − = charging) is turned into a charging current (amps = power ÷ (phases × voltage), kept between the minimum and maximum current and rounded to the current step) on the charger's maximum current, and charging is switched on. While take control is off, charging is switched off and the maximum current goes back to the minimum. Checked every 15 seconds (OCPP chargers need time per command), when a car is plugged in and when take control changes. Version 1.",
+      "version": 1,
       "device_types": [
         "ev_charger"
       ],
       "brand": "OCPP",
-      "min_ems_version": "1.0.686",
+      "min_ems_version": "1.0.561",
       "max_ems_version": null,
-      "sha256": "8e03e77fe9bab8e98666b41765a5c66907fd5df2495e7c60dfc9afbc84ec5bbe",
+      "sha256": "699a5686084208966505ffe4b57ee223182efa81fcb2788ab090e3c335d23018",
       "inputs": [
         {
           "name": "ems_take_control",
@@ -1075,7 +1075,7 @@
               "mode": "box"
             }
           },
-          "default": 2
+          "default": 1
         }
       ]
     },
